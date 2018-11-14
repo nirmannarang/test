@@ -7,7 +7,7 @@
 #Description:   The script builds Calico version v3.2.3 on Linux on IBM Z for Rhel(7.3, 7.4, 7.5), Ubuntu(16.04, 18.04) and SLES(12SP3, 15).
 #Maintainer :   LoZ Open Source Ecosystem (https://www.ibm.com/developerworks/community/groups/community/lozopensource) 
 #Info/Notes :   Please refer to the instructions first for Building Calico mentioned in wiki( https://github.com/linux-on-ibm-z/docs/wiki/Building-Calico-3.x ).
-#               Build logs can be found in $GOPATH/buildLogs/ . Test logs can be found at $GOPATH/buildLogs/testlogN.
+#               Build logs can be found in $HOME/Calico_v3.2.3/logs/ . Test logs can be found at $HOME/Calico_v3.2.3/logs/testlogN.
 #               By Default, system tests are turned off. To run system tests for Calico, pass argument "-t" to shell script.
 #Download build script :   wget https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/calico/build_Calico.sh
 #Run build script      :   bash build_Calico.sh       #(To only build Calico, provide -h for help)
@@ -65,11 +65,6 @@ export LOGDIR=${WORKDIR}/logs
 export CONF_LOG="${LOGDIR}/configuration-$(date +"%F-%T").log"
 touch $CONF_LOG
 export PATCH_URL="https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Calico/patch"
-export GO_INSTALL_URL="https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Go/build_go.sh"
-
-#Default GOPATH if not present already.
-export GO_DEFAULT="$HOME/go"
-export GO_FLAG="DEFAULT"
 
 if [[ "$TESTS" == "true" ]]
 then
@@ -253,7 +248,7 @@ if [[ "$FORCE" == "true" ]]; then
 	printf -- 'Force attribute provided hence continuing with install without confirmation message\n' | tee -a "$CONF_LOG"
 else
 	# Ask user for prerequisite installation
-	printf -- "\nAs part of the installation , Go 1.10.1 will be installed, \n" | tee -a "$CONF_LOG"
+	printf -- "\nAs part of the installation, Go 1.10.1 will be installed at $WORKDIR/go. Please remove other instances of Go installations before proceeding !! \n" | tee -a "$CONF_LOG"
 	while true; do
 		read -r -p "Do you want to continue (y/n) ? :  " yn
 		case $yn in
@@ -271,34 +266,41 @@ printf -- 'Configuration and Installation started \n' | tee -a "$CONF_LOG"
 
 # Install go
 printf -- "Installing Go... \n"  | tee -a "$CONF_LOG"
-curl -s  $GO_INSTALL_URL | sudo bash
-
-# Set GOPATH if not already set
-if [[ -z "${GOPATH}" ]]; then
-	printf -- "Setting default value for GOPATH \n"
-	#Check if go directory exists
-	if [ ! -d "$HOME/go" ]; then
-		mkdir "$HOME/go"
-	fi
-	export GOPATH="${GO_DEFAULT}"
-else
-	printf -- "GOPATH already set : Value : %s \n" "$GOPATH"
-	export GO_FLAG="CUSTOM"
+if command -v "go" > /dev/null ;
+then
+    printf -- "Go already exists on system, this might create a conflict and fail the Calico build due to mismatch of go deps paths. \n" | tee -a "$CONF_LOG"
+    which go | tee -a "$CONF_LOG"
+    printf -- "Please remove other instances of Go installations before proceeding !! Exiting !! \n" | tee -a "$CONF_LOG"
+	printf -- "After removing GO, logoff and login again to not conflict the GO ENV Variables like GOROOT etc." | tee -a "$CONF_LOG"
+	exit 1
 fi
 
-#export GOROOT=$GOPATH/go
-#export PATH=$GOROOT/bin:$PATH
+# Download GO binary and Set GOPATH and other ENV variables
+printf -- 'Downloading go binaries \n'
+cd $WORKDIR
+rm -rf go
+rm -rf go1.10.1.linux-s390x.tar.gz*
+wget https://storage.googleapis.com/golang/go1.10.1.linux-s390x.tar.gz | tee -a  "$CONF_LOG"
+chmod ugo+r go1.10.1.linux-s390x.tar.gz
+tar xf go1.10.1.linux-s390x.tar.gz
+rm -rf go1.10.1.linux-s390x.tar.gz*
+export GOPATH=$WORKDIR
+export GOROOT=$GOPATH/go
+export PATH=$GOROOT/bin:$PATH
 export PATH=$PATH:$GOPATH/bin
 
+
+
 ### 3.2 Install `etcd v3.3.7`.
+printf -- "Installing etcd v3.3.7... \n"  | tee -a "$CONF_LOG"
 cd $GOPATH 
 mkdir -p $GOPATH/src/github.com/coreos
 mkdir -p $GOPATH/etcd_temp
 cd $GOPATH/src/github.com/coreos
 rm -rf etcd
-git clone git://github.com/coreos/etcd
+git clone git://github.com/coreos/etcd | tee -a "$CONF_LOG"
 cd etcd
-git checkout v3.3.7
+git checkout v3.3.7 | tee -a "$CONF_LOG"
 export ETCD_DATA_DIR=$GOPATH/etcd_temp
 export ETCD_UNSUPPORTED_ARCH=s390x
 ./build
