@@ -17,8 +17,8 @@
 
 ### 1. Determine if Calico system tests are to be run
 set -e
-export FORCE="false"
-export TESTS="false"
+FORCE="false"
+TESTS="false"
 
 # Print the usage message
 function printHelp() {
@@ -46,8 +46,8 @@ while getopts "h?dyt" opt; do
 	esac
 done
 
-export PACKAGE_NAME="Calico"
-export PACKAGE_VERSION="v3.2.3"
+PACKAGE_NAME="Calico"
+PACKAGE_VERSION="v3.2.3"
 
 cd $HOME
 #Check if directory exists
@@ -64,7 +64,11 @@ export LOGDIR=${WORKDIR}/logs
 #Create configuration log file
 export CONF_LOG="${LOGDIR}/configuration-$(date +"%F-%T").log"
 touch $CONF_LOG
-export PATCH_URL="https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Calico/patch"
+PATCH_URL="https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Calico/patch"
+GO_INSTALL_URL="https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Go/build_go.sh"
+GO_DEFAULT="$HOME/go"
+GO_FLAG="DEFAULT"
+
 
 if [[ "$TESTS" == "true" ]]
 then
@@ -81,7 +85,6 @@ if [[ "$ID" == "rhel" ]]; then
 	if [ -x "$(command -v docker)" ]; then
 		docker --version | grep "Docker version" | tee -a "$CONF_LOG"
 		echo "Docker already exists !! Skipping Docker Installation." | tee -a "$CONF_LOG"
-		sudo chmod ugo+rw /var/run/docker.sock
 		docker ps | tee -a "$CONF_LOG"
 	else
 		echo "Installing Docker !!"
@@ -150,7 +153,6 @@ elif [[ "$ID" == "sles" ]]; then
 	if [ -x "$(command -v docker)" ]; then
 		docker --version | grep "Docker version" | tee -a "$CONF_LOG"
 		echo "Docker already exists !! Skipping Docker Installation." | tee -a "$CONF_LOG"
-		sudo chmod ugo+rw /var/run/docker.sock
 		docker ps | tee -a "$CONF_LOG"
 	else
 		echo "Installing Docker !!"
@@ -218,7 +220,6 @@ elif [[ "$ID" == "ubuntu" ]]; then
 	if [ -x "$(command -v docker)" ]; then 
 		docker --version | grep "Docker version" | tee -a "$CONF_LOG"
 		echo "Docker already exists !! Skipping Docker Installation." | tee -a "$CONF_LOG"
-		sudo chmod ugo+rw /var/run/docker.sock
 		docker ps | tee -a "$CONF_LOG"
 	else
 		echo "Installing Docker !!"
@@ -248,7 +249,7 @@ if [[ "$FORCE" == "true" ]]; then
 	printf -- 'Force attribute provided hence continuing with install without confirmation message\n' | tee -a "$CONF_LOG"
 else
 	# Ask user for prerequisite installation
-	printf -- "\nAs part of the installation, Go 1.10.1 will be installed at $WORKDIR/go. Please remove other instances of Go installations before proceeding !! \n" | tee -a "$CONF_LOG"
+	printf -- "\nAs part of the installation, Go 1.10.1 will be installed. \n" | tee -a "$CONF_LOG"
 	while true; do
 		read -r -p "Do you want to continue (y/n) ? :  " yn
 		case $yn in
@@ -266,29 +267,23 @@ printf -- 'Configuration and Installation started \n' | tee -a "$CONF_LOG"
 
 # Install go
 printf -- "Installing Go... \n"  | tee -a "$CONF_LOG"
-if command -v "go" > /dev/null ;
-then
-    printf -- "Go already exists on system, this might create a conflict and fail the Calico build due to mismatch of go deps paths. \n" | tee -a "$CONF_LOG"
-    which go | tee -a "$CONF_LOG"
-    printf -- "Please remove other instances of Go installations before proceeding !! Exiting !! \n" | tee -a "$CONF_LOG"
-	printf -- "After removing GO, logoff and login again to not conflict the GO ENV Variables like GOROOT etc." | tee -a "$CONF_LOG"
-	exit 1
+curl -s  $GO_INSTALL_URL | sudo bash
+
+
+# Set GOPATH if not already set
+if [[ -z "${GOPATH}" ]]; then
+	printf -- "Setting default value for GOPATH \n"
+	#Check if go directory exists
+	if [ ! -d "$HOME/go" ]; then
+		mkdir "$HOME/go"
+	fi
+	export GOPATH="${GO_DEFAULT}"
+else
+	printf -- "GOPATH already set : Value : %s \n" "$GOPATH"
+	export GO_FLAG="CUSTOM"
 fi
 
-# Download GO binary and Set GOPATH and other ENV variables
-printf -- 'Downloading go binaries \n'
-cd $WORKDIR
-rm -rf go
-rm -rf go1.10.1.linux-s390x.tar.gz*
-wget https://storage.googleapis.com/golang/go1.10.1.linux-s390x.tar.gz | tee -a  "$CONF_LOG"
-chmod ugo+r go1.10.1.linux-s390x.tar.gz
-tar xf go1.10.1.linux-s390x.tar.gz
-rm -rf go1.10.1.linux-s390x.tar.gz*
-export GOPATH=$WORKDIR
-export GOROOT=$GOPATH/go
-export PATH=$GOROOT/bin:$PATH
-export PATH=$PATH:$GOPATH/bin
-
+export PATH=$GOPATH/bin:$PATH
 
 
 ### 3.2 Install `etcd v3.3.7`.
