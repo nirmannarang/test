@@ -465,7 +465,7 @@ rm -rf felix_dockerfile.diff
 cd $GOPATH/src/github.com/projectcalico/felix
 ARCH=s390x make image 2>&1 | tee -a "$FELIX_LOG"
 
-if grep -Fxq "Successfully tagged calico/felix:latest-s390x" $GOPATH/buildLogs/felix.log
+if grep -Fxq "Successfully tagged calico/felix:latest-s390x" $FELIX_LOG
 then
     echo "Successfully built calico/felix" | tee -a "$FELIX_LOG"
 else
