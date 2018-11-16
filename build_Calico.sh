@@ -351,7 +351,7 @@ fi
 export BIRD_LOG="${LOGDIR}/bird-$(date +"%F-%T").log"
 touch $BIRD_LOG
 ## Download the source code
-rm -rf $GOPATH/src/github.com/projectcalico/bird
+sudo rm -rf $GOPATH/src/github.com/projectcalico/bird
 git clone https://github.com/projectcalico/bird $GOPATH/src/github.com/projectcalico/bird | tee -a "$BIRD_LOG"
 cd $GOPATH/src/github.com/projectcalico/bird 
 git checkout v0.3.2 | tee -a "$BIRD_LOG"
