@@ -7,7 +7,7 @@
 #Description:   The script builds Calico version v3.2.3 on Linux on IBM Z for Rhel(7.3, 7.4, 7.5), Ubuntu(16.04, 18.04) and SLES(12SP3, 15).
 #Maintainer :   LoZ Open Source Ecosystem (https://www.ibm.com/developerworks/community/groups/community/lozopensource) 
 #Info/Notes :   Please refer to the instructions first for Building Calico mentioned in wiki( https://github.com/linux-on-ibm-z/docs/wiki/Building-Calico-3.x ).
-#               Build logs can be found in $HOME/Calico_v3.2.3/logs/ . Test logs can be found at $HOME/Calico_v3.2.3/logs/testlogN.
+#               Build logs can be found in $HOME/Calico_v3.2.3/logs/ . Test logs can be found at $HOME/Calico_v3.2.3/logs/testLog-DATE-TIME.log.
 #               By Default, system tests are turned off. To run system tests for Calico, pass argument "-t" to shell script.
 #Download build script :   wget https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/calico/build_Calico.sh
 #Run build script      :   bash build_Calico.sh       #(To only build Calico, provide -h for help)
@@ -791,10 +791,10 @@ export TEST_LOG="${LOGDIR}/testLog-$(date +"%F-%T").log"
 touch $TEST_LOG
 if [[ "$TESTS" == "true" ]]
 then
-    printf -- "###################-----------------------------------------------------------------------------------------------################### \n" | tee -a "$TEST_LOG" 
+    printf -- "##############-----------------------------------------------------------------------------------------------############## \n" | tee -a "$TEST_LOG" 
     printf -- "                             TEST Flag is set , Running system tests now. \n" | tee -a "$TEST_LOG" 
-    printf -- "                            Testlogs are saved in $GOPATH/buildLogs/testlogN \n" | tee -a "$TEST_LOG" 
-    printf -- "###################-----------------------------------------------------------------------------------------------################### \n" | tee -a "$TEST_LOG" 
+    printf -- "                            Testlogs are saved in $TEST_LOG \n" | tee -a "$TEST_LOG" 
+    printf -- "##############-----------------------------------------------------------------------------------------------############## \n" | tee -a "$TEST_LOG" 
     cd $GOPATH/src/github.com/projectcalico/node
     ARCH=s390x make st 2>&1 | tee -a "$TEST_LOG" 
 else
@@ -807,26 +807,23 @@ else
     printf -- " \n" | tee -a "$TEST_LOG" 
     printf -- "                        To run Calico system tests, run the following commands now: \n" | tee -a "$TEST_LOG" 
     printf -- "------------------------------------------------------------------------------------------------------------------- \n" | tee -a "$TEST_LOG" 
-    printf -- "                  ##   You should be in directory \$GOPATH, By default it is \$HOME/go   ## \n" | tee -a "$TEST_LOG" 
-	printf -- "                       export PACKAGE_NAME=Calico" | tee -a "$TEST_LOG" 
-    printf -- "                       export PACKAGE_VERSION=v3.2.3" | tee -a "$TEST_LOG" 
-	printf -- "                       export WORKDIR=\${HOME}/\${PACKAGE_NAME}_\${PACKAGE_VERSION}" | tee -a "$TEST_LOG" 
-	printf -- "                       export LOGDIR=${WORKDIR}/logs" | tee -a "$TEST_LOG" 
+	printf -- "                       PACKAGE_NAME=\"Calico\" \n" | tee -a "$TEST_LOG" 
+    printf -- "                       PACKAGE_VERSION=\"v3.2.3\" \n" | tee -a "$TEST_LOG" 
+	printf -- "                       export WORKDIR=\${HOME}/\${PACKAGE_NAME}_\${PACKAGE_VERSION} \n" | tee -a "$TEST_LOG" 
+	printf -- "                       export LOGDIR=\${WORKDIR}/logs \n" | tee -a "$TEST_LOG" 
 	if [[ "$GO_FLAG" == "DEFAULT" ]]
 	then
 	    printf -- "                  ##   Set default value for GOPATH \n" | tee -a "$TEST_LOG" 
-	    printf -- "                       export GOPATH=\$HOME/go" | tee -a "$TEST_LOG" 
+	    printf -- "                       export GOPATH=\$HOME/go \n" | tee -a "$TEST_LOG" 
     else
 	    printf -- "                  ##   GOPATH already set in the system : Value : %s \n" "$GOPATH" | tee -a "$TEST_LOG" 
     fi
-    printf -- "                       export GOROOT=\$GOPATH/go \n" | tee -a "$TEST_LOG" 
-    printf -- "                       export PATH=\$GOROOT/bin:\$PATH \n" | tee -a "$TEST_LOG" 
-    printf -- "                       export PATH=\$PATH:\$GOPATH/bin \n" | tee -a "$TEST_LOG" 
+    printf -- "                       export PATH=\$GOPATH/bin:\$PATH \n" | tee -a "$TEST_LOG" 
     printf -- "                       export ETCD_DATA_DIR=\$GOPATH/etcd_temp \n" | tee -a "$TEST_LOG" 
     printf -- "                       export ETCD_UNSUPPORTED_ARCH=s390x \n" | tee -a "$TEST_LOG" 
     printf -- " \n" | tee -a "$TEST_LOG" 
     printf -- " \n" | tee -a "$TEST_LOG" 
     printf -- "                  ##  Running system tests now. Test logs are saved in ${LOGDIR}/testLog-DATE-TIME.log  ## \n" | tee -a "$TEST_LOG" 
     printf -- "                       cd \$GOPATH/src/github.com/projectcalico/node \n" | tee -a "$TEST_LOG" 
-    printf -- "                       ARCH=s390x make st 2>&1 | tee -a \$LOGDIR/\$(date +"%F-%T").log \n" | tee -a "$TEST_LOG" 
+    printf -- "                       ARCH=s390x make st 2>&1 | tee -a \$LOGDIR/\$(date +"%%F-%%T").log \n" | tee -a "$TEST_LOG" 
 fi
