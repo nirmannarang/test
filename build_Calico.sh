@@ -528,7 +528,6 @@ then
 else
     ln -s yq.v1 yaml
 fi
-ln -s yq.v1 yaml
 export PATH=$PATH:$GOPATH/bin
 
 ### Build `calico/node`
