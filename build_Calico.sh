@@ -77,11 +77,32 @@ else
 	printf -- "System tests won't run for Calico by default \n"
 fi
 
+if [[ "$FORCE" == "true" ]]; then
+	printf -- 'Force attribute provided hence continuing with Docker installation without confirmation message\n' | tee -a "$CONF_LOG"
+else
+	# Ask user for prerequisite installation
+	printf -- "\nAs part of the installation, Docker will be installed. \n" | tee -a "$CONF_LOG"
+	while true; do
+		read -r -p "Do you want to continue (y/n) ? :  " yn
+		case $yn in
+		[Yy]*)
+			printf -- 'User responded with Yes. \n' >> "$CONF_LOG"
+			break
+			;;
+		[Nn]*) exit ;;
+		*) echo "Please provide confirmation to proceed." ;;
+		esac
+	done
+fi
+
+
 ### 2. Install the system dependencies
 . /etc/os-release
 if [[ "$ID" == "rhel" ]]; then
+    printf -- "\nInstalling system dependencies . . . \n" | tee -a "$CONF_LOG"
 	sudo yum install -y curl git wget tar gcc glibc-static.s390x make which patch | tee -a "$CONF_LOG"
 	export CC=gcc
+    printf -- "\nChecking if Docker is already present on the system . . . \n" | tee -a "$CONF_LOG"
 	if [ -x "$(command -v docker)" ]; then
 		docker --version | grep "Docker version" | tee -a "$CONF_LOG"
 		echo "Docker already exists !! Skipping Docker Installation." | tee -a "$CONF_LOG"
@@ -148,8 +169,10 @@ EOF
 		docker ps
 	fi
 elif [[ "$ID" == "sles" ]]; then
+    printf -- "\nInstalling system dependencies . . . \n" | tee -a "$CONF_LOG"
 	sudo zypper install -y curl git wget tar gcc glibc-static.s390x make which patch | tee -a "$CONF_LOG"
 	export CC=gcc
+    printf -- "\nChecking if Docker is already present on the system . . . \n" | tee -a "$CONF_LOG"
 	if [ -x "$(command -v docker)" ]; then
 		docker --version | grep "Docker version" | tee -a "$CONF_LOG"
 		echo "Docker already exists !! Skipping Docker Installation." | tee -a "$CONF_LOG"
@@ -216,7 +239,9 @@ EOF
 		docker ps
 	fi
 elif [[ "$ID" == "ubuntu" ]]; then
+    printf -- "\nInstalling system dependencies . . . \n" | tee -a "$CONF_LOG"
 	sudo apt-get update && sudo apt-get install -y git curl tar gcc wget make patch apt-transport-https  ca-certificates  curl software-properties-common | tee -a "$CONF_LOG"
+    printf -- "\nChecking if Docker is already present on the system . . . \n" | tee -a "$CONF_LOG"
 	if [ -x "$(command -v docker)" ]; then 
 		docker --version | grep "Docker version" | tee -a "$CONF_LOG"
 		echo "Docker already exists !! Skipping Docker Installation." | tee -a "$CONF_LOG"
@@ -263,23 +288,23 @@ else
 	done
 fi
 ### 3.1 Install `Go 1.10.1`
-printf -- 'Configuration and Installation started \n' | tee -a "$CONF_LOG"
+printf -- '\nConfiguration and Installation started \n' | tee -a "$CONF_LOG"
 
 # Install go
-printf -- "Installing Go... \n"  | tee -a "$CONF_LOG"
+printf -- "\nInstalling Go . . . \n"  | tee -a "$CONF_LOG"
 curl -s  $GO_INSTALL_URL | sudo bash
 
 
 # Set GOPATH if not already set
 if [[ -z "${GOPATH}" ]]; then
-	printf -- "Setting default value for GOPATH \n"
+	printf -- "\nSetting default value for GOPATH \n"
 	#Check if go directory exists
 	if [ ! -d "$HOME/go" ]; then
 		mkdir "$HOME/go"
 	fi
 	export GOPATH="${GO_DEFAULT}"
 else
-	printf -- "GOPATH already set : Value : %s \n" "$GOPATH"
+	printf -- "\nGOPATH already set : Value : %s \n" "$GOPATH"
 	export GO_FLAG="CUSTOM"
 fi
 
@@ -287,7 +312,7 @@ export PATH=$GOPATH/bin:$PATH
 
 
 ### 3.2 Install `etcd v3.3.7`.
-printf -- "Installing etcd v3.3.7... \n"  | tee -a "$CONF_LOG"
+printf -- "\nInstalling etcd v3.3.7 . . . \n"  | tee -a "$CONF_LOG"
 cd $GOPATH 
 mkdir -p $GOPATH/src/github.com/coreos
 mkdir -p $GOPATH/etcd_temp
@@ -298,6 +323,7 @@ cd etcd
 git checkout v3.3.7 | tee -a "$CONF_LOG"
 export ETCD_DATA_DIR=$GOPATH/etcd_temp
 export ETCD_UNSUPPORTED_ARCH=s390x
+printf -- "\nBuilding . . . \n"  | tee -a "$CONF_LOG"
 ./build
 
 printenv >> "$CONF_LOG"
@@ -305,6 +331,7 @@ printenv >> "$CONF_LOG"
 #### 4. Build `calicoctl` and  `calico/node` image
 export GOBUILD_LOG="${LOGDIR}/go-build-$(date +"%F-%T").log"
 touch $GOBUILD_LOG
+printf -- "\nBuilding go-build . . . \n"  | tee -a "$GOBUILD_LOG"
 ### 4.1 Build `go-build`
 ##This builds a docker image calico/go-build that is used to build other components
 rm -rf $GOPATH/src/github.com/projectcalico/go-build
@@ -329,6 +356,7 @@ docker tag calico/go-build:latest-s390x calico/go-build:v0.17
 ### 4.2 Build `calicoctl` binary and `calico/ctl` image
 export CALICOCTL_LOG="${LOGDIR}/calicoctl-$(date +"%F-%T").log"
 touch $CALICOCTL_LOG
+printf -- "\nBuilding calicoctl . . . \n"  | tee -a "$CALICOCTL_LOG"
 ## Download the source code
 rm -rf $GOPATH/src/github.com/projectcalico/calicoctl
 git clone https://github.com/projectcalico/calicoctl $GOPATH/src/github.com/projectcalico/calicoctl | tee -a "$CALICOCTL_LOG"
@@ -350,6 +378,7 @@ fi
 ### 4.3 Build `bird`
 export BIRD_LOG="${LOGDIR}/bird-$(date +"%F-%T").log"
 touch $BIRD_LOG
+printf -- "\nBuilding bird . . . \n"  | tee -a "$BIRD_LOG"
 ## Download the source code
 sudo rm -rf $GOPATH/src/github.com/projectcalico/bird
 git clone https://github.com/projectcalico/bird $GOPATH/src/github.com/projectcalico/bird | tee -a "$BIRD_LOG"
@@ -368,7 +397,9 @@ WORKDIR /code
 EOF
 
 ## Modify `build.sh`, patching build.sh file
+printf -- "\nDownloading patch for bird . . . \n"  | tee -a "$BIRD_LOG"
 curl  -o "bird_build.sh.diff" $PATCH_URL/bird_build.sh.diff | tee -a "$BIRD_LOG"
+printf -- "\nApplying patch to build.sh . . . \n"  | tee -a "$BIRD_LOG"
 patch build.sh bird_build.sh.diff | tee -a "$BIRD_LOG"
 rm -rf bird_build.sh.diff
 
@@ -388,6 +419,7 @@ docker tag birdbuild-s390x:latest calico/bird:latest
 ### 4.4 Build `Typha`
 export TYPHA_LOG="${LOGDIR}/typha-$(date +"%F-%T").log"
 touch $TYPHA_LOG
+printf -- "\nBuilding typha . . . \n"  | tee -a "$TYPHA_LOG"
 ## Download the source code
 rm -rf $GOPATH/src/github.com/projectcalico/typha
 git clone https://github.com/projectcalico/typha $GOPATH/src/github.com/projectcalico/typha | tee -a "$TYPHA_LOG"
@@ -395,13 +427,17 @@ cd $GOPATH/src/github.com/projectcalico/typha
 git checkout v3.2.3 | tee -a "$TYPHA_LOG"
 
 ## Modify `Makefile`, patching Makefile
+printf -- "\nDownloading patch for typha Makefile . . . \n"  | tee -a "$TYPHA_LOG"
 curl  -o "typha_makefile.diff" $PATCH_URL/typha_makefile.diff | tee -a "$TYPHA_LOG"
+printf -- "\nApplying patch to Makefile . . . \n"  | tee -a "$$TYPHA_LOG"
 patch Makefile typha_makefile.diff | tee -a "$TYPHA_LOG"
 rm -rf typha_makefile.diff
 
 ## Modify `docker-image/Dockerfile.s390x`, patching Dockerfile.s390x
 cd docker-image
+printf -- "\nDownloading patch for typha Dockerfile.s390x . . . \n"  | tee -a "$TYPHA_LOG"
 curl  -o "typha_dockerfile.diff" $PATCH_URL/typha_dockerfile.diff | tee -a "$TYPHA_LOG"
+printf -- "\nApplying patch to Dockerfile.s390x . . . \n"  | tee -a "$TYPHA_LOG"
 patch Dockerfile.s390x typha_dockerfile.diff | tee -a "$TYPHA_LOG"
 rm -rf typha_dockerfile.diff
 
@@ -421,12 +457,15 @@ fi
 ## To build `felix` it  needs `felixbackend.pb.go` that is generated by a docker image `calico/protoc`. Let's first built this image.
 export PROTO_LOG="${LOGDIR}/docker-protobuf-$(date +"%F-%T").log"
 touch $PROTO_LOG
+printf -- "\nBuilding docker-protobuf . . . \n"  | tee -a "$PROTO_LOG"
 rm -rf $GOPATH/src/github.com/projectcalico/docker-protobuf
 git clone https://github.com/tigera/docker-protobuf $GOPATH/src/github.com/projectcalico/docker-protobuf | tee -a "$PROTO_LOG"
 cd  $GOPATH/src/github.com/projectcalico/docker-protobuf
 
 ## Modify `Dockerfile-s390x`, patching the same
+printf -- "\nDownloading patch for docker-protobuf Dockerfile-s390x . . . \n"  | tee -a "$PROTO_LOG"
 curl  -o "protobuf_dockerfile.diff" $PATCH_URL/protobuf_dockerfile.diff | tee -a "$PROTO_LOG"
+printf -- "\nApplying patch to Dockerfile-s390x . . . \n"  | tee -a "$PROTO_LOG"
 patch Dockerfile-s390x protobuf_dockerfile.diff | tee -a "$PROTO_LOG"
 rm -rf protobuf_dockerfile.diff
 
@@ -436,7 +475,7 @@ if grep -Fxq "Successfully tagged calico/protoc-s390x:latest" $PROTO_LOG
 then
     echo "Successfully built calico/protoc-s390x" | tee -a "$PROTO_LOG"
 else
-    echo "calico/protoc Build FAILED, Stopping further build !!! Check logs at $GOPATH/buildLogs/docker-protobuf.log" | tee -a "$PROTO_LOG"
+    echo "calico/protoc Build FAILED, Stopping further build !!! Check logs at $PROTO_LOG" | tee -a "$PROTO_LOG"
 	exit 1
 fi
 
@@ -446,18 +485,23 @@ docker tag calico/protoc-s390x:latest calico/protoc:latest-s390x
 ### Build `felix`
 export FELIX_LOG="${LOGDIR}/felix-$(date +"%F-%T").log"
 touch $FELIX_LOG
+printf -- "\nBuilding felix . . . \n"  | tee -a "$FELIX_LOG"
 git clone https://github.com/projectcalico/felix $GOPATH/src/github.com/projectcalico/felix | tee -a "$FELIX_LOG"
 cd $GOPATH/src/github.com/projectcalico/felix
 git checkout v3.2.3 | tee -a "$FELIX_LOG"
 
 ## Modify Makefile, patching the same
+printf -- "\nDownloading patch for felix Makefile . . . \n"  | tee -a "$FELIX_LOG"
 curl  -o "felix_makefile.diff" $PATCH_URL/felix_makefile.diff | tee -a "$FELIX_LOG"
+printf -- "\nApplying patch to Makefile . . . \n"  | tee -a "$FELIX_LOG"
 patch Makefile felix_makefile.diff | tee -a "$FELIX_LOG"
 rm -rf felix_makefile.diff
 
 ## Modify `docker-image/Dockerfile.s390x`
 cd docker-image/
+printf -- "\nDownloading patch for felix Dockerfile.s390x . . . \n"  | tee -a "$FELIX_LOG"
 curl  -o "felix_dockerfile.diff" $PATCH_URL/felix_dockerfile.diff | tee -a "$FELIX_LOG"
+printf -- "\nApplying patch to Dockerfile.s390x . . . \n"  | tee -a "$FELIX_LOG"
 patch Dockerfile.s390x felix_dockerfile.diff | tee -a "$FELIX_LOG"
 rm -rf felix_dockerfile.diff
 
@@ -477,6 +521,7 @@ fi
 ### 4.6 Build `cni-plugin` binaries and image
 export CNI_LOG="${LOGDIR}/cni-plugin-$(date +"%F-%T").log"
 touch $CNI_LOG
+printf -- "\nBuilding cni-plugin . . . \n"  | tee -a "$CNI_LOG"
 ## Download the source code
 sudo mkdir -p /opt/cni/bin | tee -a "$CNI_LOG"
 rm -rf $GOPATH/src/github.com/projectcalico/cni-plugin
@@ -495,6 +540,7 @@ else
 	exit 1
 fi
 
+printf -- "\nCopying cni-plugin binaries to /opt/cni/bin . . . \n"  | tee -a "$CNI_LOG"
 sudo cp bin/s390x/* /opt/cni/bin | tee -a "$CNI_LOG"
 docker tag calico/cni:latest-s390x calico/cni:latest
 docker tag calico/cni:latest quay.io/calico/cni-s390x:v3.2.3
@@ -503,6 +549,7 @@ docker tag calico/cni:latest quay.io/calico/cni-s390x:v3.2.3
 ### 4.7 Build image `calico/node`
 export NODE_LOG="${LOGDIR}/node-$(date +"%F-%T").log"
 touch $NODE_LOG
+printf -- "\nBuilding Calico node . . . \n"  | tee -a "$NODE_LOG"
 ## Download the source
 rm -rf $GOPATH/src/github.com/projectcalico/node
 git clone https://github.com/projectcalico/node $GOPATH/src/github.com/projectcalico/node | tee -a "$NODE_LOG"
@@ -510,33 +557,44 @@ cd $GOPATH/src/github.com/projectcalico/node
 git checkout v3.2.3 | tee -a "$NODE_LOG"
 
 ## Modify `Makefile`, patching the same
+printf -- "\nDownloading patch for node Makefile . . . \n"  | tee -a "$NODE_LOG"
 curl  -o "node_makefile.diff" $PATCH_URL/node_makefile.diff | tee -a "$NODE_LOG"
+printf -- "\nApplying patch to Makefile . . . \n"  | tee -a "$NODE_LOG"
 patch Makefile node_makefile.diff | tee -a "$NODE_LOG"
 rm -rf node_makefile.diff
 
 ## Modify `Dockerfile.s390x`, patching the same
+printf -- "\nDownloading patch for node Dockerfile.s390x . . . \n"  | tee -a "$NODE_LOG"
 curl  -o "node_dockerfile.diff" $PATCH_URL/node_dockerfile.diff | tee -a "$NODE_LOG"
+printf -- "\nApplying patch to Dockerfile.s390x . . . \n"  | tee -a "$NODE_LOG"
 patch Dockerfile.s390x node_dockerfile.diff | tee -a "$NODE_LOG"
 rm -rf node_dockerfile.diff
 
 ## Get the yaml binary if not installed, needed for building `calico/node`
+printf -- "\nInstalling YAML binary . . . \n"  | tee -a "$CONF_LOG"
 go get gopkg.in/mikefarah/yq.v1
 cd $GOPATH/bin
 if [[ -e yaml ]]
 then
-    printf -- 'Yaml binary exists. \n'
+    printf -- "\nYaml binary exists. \n" | tee -a "$CONF_LOG"
 else
-    ln -s yq.v1 yaml
+    ln -s yq.v1 yaml | tee -a "$CONF_LOG"
 fi
 export PATH=$PATH:$GOPATH/bin
 
 ### Build `calico/node`
+printf -- "\nCreating filesystem/bin and dist directories for keeping binaries . . . \n"  | tee -a "$NODE_LOG"
 cd $GOPATH/src/github.com/projectcalico/node
 mkdir -p filesystem/bin
 mkdir -p dist
+printf -- "\nCopying bird binaries . . . \n"  | tee -a "$NODE_LOG"
 cp $GOPATH/src/github.com/projectcalico/bird/dist/s390x/* $GOPATH/src/github.com/projectcalico/node/filesystem/bin | tee -a "$NODE_LOG"
+printf -- "\nCopying felix binaries . . . \n"  | tee -a "$NODE_LOG"
 cp $GOPATH/src/github.com/projectcalico/felix/bin/calico-felix-s390x $GOPATH/src/github.com/projectcalico/node/filesystem/bin/calico-felix | tee -a "$NODE_LOG"
+printf -- "\nCopying calicoctl binaries . . . \n"  | tee -a "$NODE_LOG"
 cp $GOPATH/src/github.com/projectcalico/calicoctl/bin/calicoctl-linux-s390x $GOPATH/src/github.com/projectcalico/node/dist/calicoctl | tee -a "$NODE_LOG"
+
+printf -- "\nBuilding calico/node Image . . . \n"  | tee -a "$NODE_LOG"
 ARCH=s390x make calico/node 2>&1 | tee -a "$NODE_LOG"
 
 if grep -Fxq "Successfully tagged calico/node:latest-s390x" $NODE_LOG
@@ -550,12 +608,12 @@ fi
 docker tag calico/node:latest-s390x quay.io/calico/node-s390x:v3.2.3
 docker tag calico/node:latest-s390x calico/node
 
+
 #### 5. Calico testcases
-
-
 ### 5.1 Build `etcd`
 export ETCD_LOG="${LOGDIR}/etcd-$(date +"%F-%T").log"
 touch $ETCD_LOG
+printf -- "\nBuilding etcd Image . . . \n"  | tee -a "$ETCD_LOG"
 rm -rf $GOPATH/src/github.com/projectcalico/etcd
 cd $GOPATH/src/github.com/projectcalico/
 git clone https://github.com/coreos/etcd | tee -a "$ETCD_LOG"
@@ -563,7 +621,9 @@ cd etcd
 git checkout v3.3.7 | tee -a "$ETCD_LOG"
 
 ## Modify `Dockerfile-release` for s390x
+printf -- "\nDownloading patch for etcd Dockerfile-release . . . \n"  | tee -a "$ETCD_LOG"
 curl  -o "etcd_dockerfile.diff" $PATCH_URL/etcd_dockerfile.diff | tee -a "$ETCD_LOG"
+printf -- "\nApplying patch to Dockerfile-release . . . \n"  | tee -a "$ETCD_LOG"
 patch Dockerfile-release etcd_dockerfile.diff | tee -a "$ETCD_LOG"
 rm -rf etcd_dockerfile.diff
 
@@ -580,19 +640,23 @@ else
 fi
 
 cd bin
+printf -- "\nCreate a tar file containing etcd, etcdctl binaries . . . \n"  | tee -a "$ETCD_LOG"
 tar cvf etcd-v3.3.7-linux-s390x.tar etcd etcdctl | tee -a "$ETCD_LOG"
+printf -- "\nCompressing etcd tar file using gzip . . . \n"  | tee -a "$ETCD_LOG"
 gzip etcd-v3.3.7-linux-s390x.tar | tee -a "$ETCD_LOG"
 docker tag quay.io/coreos/etcd:latest quay.io/coreos/etcd:v3.3.7-s390x
+docker tag quay.io/coreos/etcd quay.io/coreos/etcd:v3.3.7
 
 
 ### 5.2 Build `Confd` Image
 export CONFD_LOG="${LOGDIR}/confd-$(date +"%F-%T").log"
 touch $CONFD_LOG
+printf -- "\nBuilding confd Image . . . \n"  | tee -a "$CONFD_LOG"
 rm -rf $GOPATH/src/github.com/projectcalico/confd-v3.1.3
 git clone https://github.com/projectcalico/confd $GOPATH/src/github.com/projectcalico/confd-v3.1.3 | tee -a "$CONFD_LOG"
 cd $GOPATH/src/github.com/projectcalico/confd-v3.1.3
 git checkout v3.1.3 | tee -a "$CONFD_LOG"
-
+printf -- "\nCreating Dockerfile-s390x for confd Image . . . \n"  | tee -a "$CONFD_LOG"
 ## Create `Dockerfile-s390x`
 cat << 'EOF' > Dockerfile-s390x
 FROM s390x/alpine:3.6
@@ -620,14 +684,18 @@ docker tag calico/confd-s390x:latest calico/confd:v3.1.1-s390x
 ### 5.3 Build `calico/routereflector`
 export RREFLECTOR_LOG="${LOGDIR}/routereflector-$(date +"%F-%T").log"
 touch $RREFLECTOR_LOG
+printf -- "\nBuilding Routereflector . . . \n"  | tee -a "$RREFLECTOR_LOG"
 rm -rf $GOPATH/src/github.com/projectcalico/routereflector
 git clone https://github.com/projectcalico/routereflector.git $GOPATH/src/github.com/projectcalico/routereflector | tee -a "$RREFLECTOR_LOG"
 cd $GOPATH/src/github.com/projectcalico/routereflector
 git checkout v0.6.3 | tee -a "$RREFLECTOR_LOG"
+printf -- "\nCopying bird binaries to image directory of Routereflector . . . \n"  | tee -a "$RREFLECTOR_LOG"
 cp $GOPATH/src/github.com/projectcalico/bird/dist/s390x/* image/ | tee -a "$RREFLECTOR_LOG"
 
 ## Modify `Makefile`, patching the same
+printf -- "\nDownloading patch for routereflector Makefile . . . \n"  | tee -a "$RREFLECTOR_LOG"
 curl  -o "routereflector_makefile.diff" $PATCH_URL/routereflector_makefile.diff | tee -a "$RREFLECTOR_LOG"
+printf -- "\nApplying patch to Makefile . . . \n"  | tee -a "$RREFLECTOR_LOG"
 patch Makefile routereflector_makefile.diff | tee -a "$RREFLECTOR_LOG"
 rm -rf routereflector_makefile.diff
 
@@ -649,6 +717,7 @@ docker tag calico/routereflector:latest-s390x calico/routereflector:latest
 ### 5.4 Build `calico/dind`
 export DIND_LOG="${LOGDIR}/dind-$(date +"%F-%T").log"
 touch $DIND_LOG
+printf -- "\nBuilding dind Image for s390x . . . \n"  | tee -a "$DIND_LOG"
 rm -rf $GOPATH/src/github.com/projectcalico/dind
 git clone https://github.com/projectcalico/dind $GOPATH/src/github.com/projectcalico/dind | tee -a "$DIND_LOG"
 cd $GOPATH/src/github.com/projectcalico/dind
@@ -664,12 +733,18 @@ else
 fi
 
 
-### 5.5 Build `calico/test`
+### 5.5 Build `calico_test`
+export TEST_LOG="${LOGDIR}/testLog-$(date +"%F-%T").log"
+touch $TEST_LOG
+printf -- "\nMaking required changes to node/calico_test for s390x . . . \n"  | tee -a "$TEST_LOG"
 cd $GOPATH/src/github.com/projectcalico/node/calico_test/
-mkdir pkg
+printf -- "\nCreating directory pkg . . . \n"  | tee -a "$TEST_LOG"
+mkdir -p pkg
+printf -- "\nCopying etcd tar file to pkg dir in calico_test . . . \n"  | tee -a "$TEST_LOG"
 cp $GOPATH/src/github.com/projectcalico/etcd/bin/etcd-v3.3.7-linux-s390x.tar.gz pkg
 
 ## Create `Dockerfile.s390x.calico_test`
+printf -- "\nCreating Dockerfile.s390x.calico_test . . . \n"  | tee -a "$TEST_LOG"
 cat << 'EOF' > Dockerfile.s390x.calico_test
 FROM s390x/docker:18.03.0
 MAINTAINER LoZ Open Source Ecosystem (https://www.ibm.com/developerworks/community/groups/community/lozopensource)
@@ -697,14 +772,17 @@ EOF
 
 ### 5.6 Run the test cases
 #Pull s390x images for creating workload
-docker pull s390x/busybox
+printf -- "\nPulling s390x images for creating workload . . . \n"  | tee -a "$TEST_LOG"
+docker pull s390x/busybox | tee -a "$TEST_LOG"
 docker tag s390x/busybox busybox
-docker pull s390x/nginx
+docker pull s390x/nginx | tee -a "$TEST_LOG"
 docker tag s390x/nginx nginx
-docker tag quay.io/coreos/etcd quay.io/coreos/etcd:v3.3.7
+
 
 ## Create `Dockerfile.s390x`
+printf -- "\nMaking required changes to node/workload for s390x . . . \n"  | tee -a "$TEST_LOG"
 cd $GOPATH/src/github.com/projectcalico/node/workload
+printf -- "\nCreating Dockerfile.s390x . . . \n"  | tee -a "$TEST_LOG"
 cat << 'EOF' > Dockerfile.s390x
 FROM s390x/alpine:3.8
 RUN apk add --no-cache \
@@ -720,6 +798,7 @@ EOF
 #Verifying if all images are built/tagged
 export VERIFY_LOG="${LOGDIR}/verify-images-$(date +"%F-%T").log"
 touch $VERIFY_LOG
+printf -- "\nVerifying if all needed images are successfully built/downloaded ? . . . \n"  | tee -a "$VERIFY_LOG"
 cd $WORKDIR
 echo "Required Docker Images: " >> $VERIFY_LOG
 cat << 'EOF' > docker_images_expected.txt
@@ -783,7 +862,7 @@ else
 	echo "                                  CALICO NODE & TESTS BUILD COMPLETED SUCCESSFULLY !!" | tee -a "$VERIFY_LOG"
 	echo "###################-----------------------------------------------------------------------------------------------###################" | tee -a "$VERIFY_LOG"
 fi
-
+rm -rf docker_images_expected.txt docker_images.txt
 ##########################################################################################################################################################
 ##########################################################################################################################################################
 #                                              CALICO NODE & TESTS BUILD COMPLETED SUCCESSFULLY                                                          #
@@ -792,8 +871,6 @@ fi
 
 ## 4.6.2 Execute test cases(Optional)
 #Will only run if arg "-t" is passed to shell script
-export TEST_LOG="${LOGDIR}/testLog-$(date +"%F-%T").log"
-touch $TEST_LOG
 if [[ "$TESTS" == "true" ]]
 then
     printf -- "##############-----------------------------------------------------------------------------------------------############## \n" | tee -a "$TEST_LOG" 
