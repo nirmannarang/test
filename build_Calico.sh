@@ -522,6 +522,12 @@ rm -rf node_dockerfile.diff
 ## Get the yaml binary if not installed, needed for building `calico/node`
 go get gopkg.in/mikefarah/yq.v1
 cd $GOPATH/bin
+if [[ -e yaml ]]
+then
+    printf -- 'Yaml binary exists. \n'
+else
+    ln -s yq.v1 yaml
+fi
 ln -s yq.v1 yaml
 export PATH=$PATH:$GOPATH/bin
 
