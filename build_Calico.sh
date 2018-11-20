@@ -171,6 +171,9 @@ if [[ -z "${GOPATH}" ]]; then
 	export GOPATH="${GO_DEFAULT}"
 else
 	printf -- "\nGOPATH already set : Value : %s \n" "$GOPATH"
+    if [ ! -d "$GOPATH" ]; then
+        mkdir -p "$GOPATH"
+    fi
 	export GO_FLAG="CUSTOM"
 fi
 
