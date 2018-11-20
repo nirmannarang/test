@@ -69,205 +69,70 @@ GO_INSTALL_URL="https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/
 GO_DEFAULT="$HOME/go"
 GO_FLAG="DEFAULT"
 
+if [ -f "/etc/os-release" ]; then
+    source "/etc/os-release"
+else
+    cat /etc/redhat-release >>"${CONF_LOG}"
+    ID="rhel"
+    VERSION_ID="6.x"
+    PRETTY_NAME="Red Hat Enterprise Linux 6.x"
+fi
+
+if command -v "sudo" >/dev/null; then
+    printf -- 'Sudo : Yes\n' >>"$CONF_LOG"
+else
+    printf -- 'Sudo : No \n' >>"$CONF_LOG"
+    printf -- 'You can install the same from installing sudo from repository using apt, yum or zypper based on your distro. \n'
+    exit 1
+fi
 
 if [[ "$TESTS" == "true" ]]
 then
-	printf -- "TEST Flag is set , System tests will also run after Calico node build is complete. \n" | tee -a "$CONF_LOG"
+    printf -- "\n TEST Flag is set , System tests will also run after Calico node build is complete. \n" | tee -a "$CONF_LOG"
 else
-	printf -- "System tests won't run for Calico by default \n"
+    printf -- "\n System tests won't run for Calico by default \n" | tee -a "$CONF_LOG"
 fi
 
-if [[ "$FORCE" == "true" ]]; then
-	printf -- 'Force attribute provided hence continuing with Docker installation without confirmation message\n' | tee -a "$CONF_LOG"
-else
-	# Ask user for prerequisite installation
-	printf -- "\nAs part of the installation, Docker will be installed. \n" | tee -a "$CONF_LOG"
-	while true; do
-		read -r -p "Do you want to continue (y/n) ? :  " yn
-		case $yn in
-		[Yy]*)
-			printf -- 'User responded with Yes. \n' >> "$CONF_LOG"
-			break
-			;;
-		[Nn]*) exit ;;
-		*) echo "Please provide confirmation to proceed." ;;
-		esac
-	done
-fi
+### 2. Install dependencies
+DISTRO="$ID-$VERSION_ID"
+case "$DISTRO" in
+"ubuntu-16.04" | "ubuntu-18.04")
+	printf -- "Installing %s %s for %s \n" "$PACKAGE_NAME" "$PACKAGE_VERSION" "$DISTRO" | tee -a "$CONF_LOG"
+	printf -- "Installing dependencies . . .  it may take some time.\n"
+	sudo apt-get update 
+	sudo apt-get install -y wget git libseccomp-dev curl patch  | tee -a "$CONF_LOG"
+	;;
 
-
-### 2. Install the system dependencies
-. /etc/os-release
-if [[ "$ID" == "rhel" ]]; then
-    printf -- "\nInstalling system dependencies . . . \n" | tee -a "$CONF_LOG"
+"rhel-7.3" | "rhel-7.4" | "rhel-7.5")
+	printf -- "Installing %s %s for %s \n" "$PACKAGE_NAME" "$PACKAGE_VERSION" "$DISTRO" | tee -a "$CONF_LOG"
+	printf -- "Installing dependencies . . .  it may take some time.\n"
 	sudo yum install -y curl git wget tar gcc glibc-static.s390x make which patch | tee -a "$CONF_LOG"
 	export CC=gcc
-    printf -- "\nChecking if Docker is already present on the system . . . \n" | tee -a "$CONF_LOG"
-	if [ -x "$(command -v docker)" ]; then
-		docker --version | grep "Docker version" | tee -a "$CONF_LOG"
-		echo "Docker already exists !! Skipping Docker Installation." | tee -a "$CONF_LOG"
-		docker ps | tee -a "$CONF_LOG"
-	else
-		echo "Installing Docker !!"
-		rm -rf docker-18.06.1-ce.tgz docker
-		wget https://download.docker.com/linux/static/stable/s390x/docker-18.06.1-ce.tgz | tee -a "$CONF_LOG"
-		tar xvf docker-18.06.1-ce.tgz | tee -a "$CONF_LOG"
-		sudo cp docker/* /usr/local/bin/ | tee -a "$CONF_LOG"
-cat << 'EOF' > docker.service
-[Unit]
-Description=Docker Application Container Engine
-Documentation=http://docs.docker.com
-After=network.target docker.socket
-Requires=docker.socket
+	;;
 
-[Service]
-# the default is not to use systemd for cgroups because the delegate issues still
-# exists and systemd currently does not support the cgroup feature set required
-# for containers run by docker
-#EnvironmentFile=/etc/sysconfig/docker
-PIDFile=/var/run/docker.pid
-ExecStart=/usr/local/bin/dockerd -H fd:// -H tcp://0.0.0.0:2375 -G docker
-MountFlags=slave
-LimitNOFILE=1048576
-LimitNPROC=1048576
-LimitCORE=infinity
-# set delegate yes so that systemd does not reset the cgroups of docker containers
-Delegate=yes
+"sles-12.3" | "sles-15")
+	printf -- "Installing %s %s for %s \n" "$PACKAGE_NAME" "$PACKAGE_VERSION" "$DISTRO" | tee -a "$CONF_LOG"
+	printf -- "Installing dependencies . . .  it may take some time.\n"
+    sudo zypper install -y curl git wget tar gcc glibc-static.s390x make which patch | tee -a "$CONF_LOG"
+    export CC=gcc
+	;;
 
-[Install]
-WantedBy=multi-user.target
-EOF
-cat << 'EOF' > docker.socket
-[Unit]
-Description=Docker Socket for the API
-PartOf=docker.service
+*)
+	printf -- "%s not supported \n" "$DISTRO" | tee -a "$CONF_LOG"
+	exit 1
+	;;
+esac
 
-[Socket]
-ListenStream=/var/run/docker.sock
-SocketMode=0660
-# A Socket(User|Group) replacement workaround for systemd <= 214
-#ExecStartPost=/usr/bin/chown root:docker /var/run/docker.sock
 
-[Install]
-WantedBy=sockets.target
-EOF
-		sudo mv docker.service /etc/systemd/system/
-		sudo mv docker.socket /etc/systemd/system/
-		sudo systemctl daemon-reload
-		sudo systemctl enable docker
-		sudo systemctl start docker | tee -a "$CONF_LOG"
-		sleep 120s
-		sudo chmod ugo+rw /var/run/docker.sock
-		if [ `sudo systemctl is-active docker` = "active" ]
-		then
-		    echo "Docker service is active" | tee -a "$CONF_LOG"
-        else
-		    echo "Docker service is not active" | tee -a "$CONF_LOG"
-			echo "Please check \"systemctl status docker.service\" for the logs" | tee -a "$CONF_LOG"
-			exit 1
-		fi
-		docker ps
-	fi
-elif [[ "$ID" == "sles" ]]; then
-    printf -- "\nInstalling system dependencies . . . \n" | tee -a "$CONF_LOG"
-	sudo zypper install -y curl git wget tar gcc glibc-static.s390x make which patch | tee -a "$CONF_LOG"
-	export CC=gcc
-    printf -- "\nChecking if Docker is already present on the system . . . \n" | tee -a "$CONF_LOG"
-	if [ -x "$(command -v docker)" ]; then
-		docker --version | grep "Docker version" | tee -a "$CONF_LOG"
-		echo "Docker already exists !! Skipping Docker Installation." | tee -a "$CONF_LOG"
-		docker ps | tee -a "$CONF_LOG"
-	else
-		echo "Installing Docker !!"
-		rm -rf docker-18.06.1-ce.tgz docker
-		wget https://download.docker.com/linux/static/stable/s390x/docker-18.06.1-ce.tgz | tee -a "$CONF_LOG"
-		tar xvf docker-18.06.1-ce.tgz | tee -a "$CONF_LOG"
-		sudo cp docker/* /usr/local/bin/ | tee -a "$CONF_LOG"
-cat << 'EOF' > docker.service
-[Unit]
-Description=Docker Application Container Engine
-Documentation=http://docs.docker.com
-After=network.target docker.socket
-Requires=docker.socket
-
-[Service]
-# the default is not to use systemd for cgroups because the delegate issues still
-# exists and systemd currently does not support the cgroup feature set required
-# for containers run by docker
-#EnvironmentFile=/etc/sysconfig/docker
-PIDFile=/var/run/docker.pid
-ExecStart=/usr/local/bin/dockerd -H fd:// -H tcp://0.0.0.0:2375 -G docker
-MountFlags=slave
-LimitNOFILE=1048576
-LimitNPROC=1048576
-LimitCORE=infinity
-# set delegate yes so that systemd does not reset the cgroups of docker containers
-Delegate=yes
-
-[Install]
-WantedBy=multi-user.target
-EOF
-cat << 'EOF' > docker.socket
-[Unit]
-Description=Docker Socket for the API
-PartOf=docker.service
-
-[Socket]
-ListenStream=/var/run/docker.sock
-SocketMode=0660
-# A Socket(User|Group) replacement workaround for systemd <= 214
-#ExecStartPost=/usr/bin/chown root:docker /var/run/docker.sock
-
-[Install]
-WantedBy=sockets.target
-EOF
-		sudo mv docker.service /etc/systemd/system/
-		sudo mv docker.socket /etc/systemd/system/
-		sudo systemctl daemon-reload
-		sudo systemctl enable docker
-		sudo systemctl start docker | tee -a "$CONF_LOG"
-		sleep 120s
-		sudo chmod ugo+rw /var/run/docker.sock
-		if [ `sudo systemctl is-active docker` = "active" ]
-		then
-		    echo "Docker service is active" | tee -a "$CONF_LOG"
-        else
-		    echo "Docker service is not active" | tee -a "$CONF_LOG"
-			echo "Please check \"systemctl status docker.service\" for the logs" | tee -a "$CONF_LOG"
-			exit 1
-		fi
-		docker ps
-	fi
-elif [[ "$ID" == "ubuntu" ]]; then
-    printf -- "\nInstalling system dependencies . . . \n" | tee -a "$CONF_LOG"
-	sudo apt-get update && sudo apt-get install -y git curl tar gcc wget make patch apt-transport-https  ca-certificates  curl software-properties-common | tee -a "$CONF_LOG"
-    printf -- "\nChecking if Docker is already present on the system . . . \n" | tee -a "$CONF_LOG"
-	if [ -x "$(command -v docker)" ]; then 
-		docker --version | grep "Docker version" | tee -a "$CONF_LOG"
-		echo "Docker already exists !! Skipping Docker Installation." | tee -a "$CONF_LOG"
-		docker ps | tee -a "$CONF_LOG"
-	else
-		echo "Installing Docker !!"
-		curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-		sudo add-apt-repository "deb [arch=s390x] https://download.docker.com/linux/ubuntu artful stable" | tee -a "$CONF_LOG"
-		sudo apt-get update
-		sudo apt-get install -y docker-ce | tee -a "$CONF_LOG"
-		sudo systemctl enable docker
-		sudo systemctl start docker | tee -a "$CONF_LOG"
-		sleep 120s
-		sudo chmod ugo+rw /var/run/docker.sock
-		if [ `sudo systemctl is-active docker` = "active" ]
-		then
-		    echo "Docker service is active" | tee -a "$CONF_LOG"
-        else
-		    echo "Docker service is not active" | tee -a "$CONF_LOG"
-			echo "Please check \"systemctl status docker.service\" for the logs" | tee -a "$CONF_LOG"
-			exit 1
-		fi
-		docker ps | tee -a "$CONF_LOG"
-	fi
+printf -- "\nChecking if Docker is already present on the system . . . \n" | tee -a "$CONF_LOG"
+if [ -x "$(command -v docker)" ]; then
+    docker --version | grep "Docker version" | tee -a "$CONF_LOG"
+    echo "Docker exists !!" | tee -a "$CONF_LOG"
+    docker ps | tee -a "$CONF_LOG"
+else
+    printf -- "\n Please install and run Docker first !! \n" | tee -a "$CONF_LOG"
+    exit 1
 fi
-
 
 #### 3. Install `Go` and  `etcd` as prerequisites
 if [[ "$FORCE" == "true" ]]; then
@@ -287,6 +152,7 @@ else
 		esac
 	done
 fi
+
 ### 3.1 Install `Go 1.10.1`
 printf -- '\nConfiguration and Installation started \n' | tee -a "$CONF_LOG"
 
