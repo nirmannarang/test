@@ -158,7 +158,9 @@ printf -- '\nConfiguration and Installation started \n' | tee -a "$CONF_LOG"
 
 # Install go
 printf -- "\nInstalling Go . . . \n"  | tee -a "$CONF_LOG"
-curl -s  $GO_INSTALL_URL | sudo bash
+printf -- "\nDownloading Build Script for Go . . . \n"  | tee -a "$CONF_LOG"
+wget -O build_go.sh $GO_INSTALL_URL | tee -a "$CONF_LOG"
+bash build_go.sh -v 1.10.1 | tee -a "$CONF_LOG"
 
 
 # Set GOPATH if not already set
