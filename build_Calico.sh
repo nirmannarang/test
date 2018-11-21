@@ -129,6 +129,10 @@ if [ -x "$(command -v docker)" ]; then
     docker --version | grep "Docker version" | tee -a "$CONF_LOG"
     echo "Docker exists !!" | tee -a "$CONF_LOG"
     docker ps | tee -a "$CONF_LOG"
+	if [[ "$?" == "1"]]
+    then
+        printf -- "\n Docker is not up and running !!  Please start Docker first\n" | tee -a "$CONF_LOG"
+    fi
 else
     printf -- "\n Please install and run Docker first !! \n" | tee -a "$CONF_LOG"
     exit 1
