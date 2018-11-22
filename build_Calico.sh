@@ -7,8 +7,11 @@
 #Description:   The script builds Calico version v3.2.3 on Linux on IBM Z for Rhel(7.3, 7.4, 7.5), Ubuntu(16.04, 18.04) and SLES(12SP3, 15).
 #Maintainer :   LoZ Open Source Ecosystem (https://www.ibm.com/developerworks/community/groups/community/lozopensource) 
 #Info/Notes :   Please refer to the instructions first for Building Calico mentioned in wiki( https://github.com/linux-on-ibm-z/docs/wiki/Building-Calico-3.x ).
+#               This script doesn't handle Docker installation. Install docker first before proceeding.
 #               Build logs can be found in $HOME/Calico_v3.2.3/logs/ . Test logs can be found at $HOME/Calico_v3.2.3/logs/testLog-DATE-TIME.log.
 #               By Default, system tests are turned off. To run system tests for Calico, pass argument "-t" to shell script.
+#
+#
 #Download build script :   wget https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/calico/build_Calico.sh
 #Run build script      :   bash build_Calico.sh       #(To only build Calico, provide -h for help)
 #                          bash build_Calico.sh -t    #(To build Calico and run system tests)
