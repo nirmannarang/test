@@ -401,6 +401,7 @@ docker tag calico/protoc-s390x:latest calico/protoc:latest-s390x
 export FELIX_LOG="${LOGDIR}/felix-$(date +"%F-%T").log"
 touch $FELIX_LOG
 printf -- "\nBuilding felix . . . \n"  | tee -a "$FELIX_LOG"
+rm -rf $GOPATH/src/github.com/projectcalico/felix
 git clone https://github.com/projectcalico/felix $GOPATH/src/github.com/projectcalico/felix | tee -a "$FELIX_LOG"
 cd $GOPATH/src/github.com/projectcalico/felix
 git checkout v3.3.1 | tee -a "$FELIX_LOG"
