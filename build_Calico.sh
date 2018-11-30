@@ -12,7 +12,7 @@
 #               By Default, system tests are turned off. To run system tests for Calico, pass argument "-t" to shell script.
 #
 #
-#Download build script :   wget https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/calico/build_Calico.sh
+#Download build script :   wget https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Calico/build_Calico.sh
 #Run build script      :   bash build_Calico.sh       #(To only build Calico, provide -h for help)
 #                          bash build_Calico.sh -t    #(To build Calico and run system tests)
 #               
@@ -20,6 +20,8 @@
 
 ### 1. Determine if Calico system tests are to be run
 set -e
+set -o pipefail
+
 FORCE="false"
 TESTS="false"
 
@@ -49,15 +51,15 @@ while getopts "h?dyt" opt; do
 	esac
 done
 
-PACKAGE_NAME="Calico"
-PACKAGE_VERSION="v3.2.3"
+NAME_PACKAGE="Calico"
+VERSION_PACKAGE="v3.2.3"
 
 cd $HOME
 #Check if directory exists
-if [ ! -d "${PACKAGE_NAME}_${PACKAGE_VERSION}" ]; then
-   mkdir -p "${PACKAGE_NAME}_${PACKAGE_VERSION}"
+if [ ! -d "${NAME_PACKAGE}_${VERSION_PACKAGE}" ]; then
+   mkdir -p "${NAME_PACKAGE}_${VERSION_PACKAGE}"
 fi
-export WORKDIR=${HOME}/${PACKAGE_NAME}_${PACKAGE_VERSION}
+export WORKDIR=${HOME}/${NAME_PACKAGE}_${VERSION_PACKAGE}
 cd $WORKDIR
 
 if [ ! -d "${WORKDIR}/logs" ]; then
@@ -100,21 +102,21 @@ fi
 DISTRO="$ID-$VERSION_ID"
 case "$DISTRO" in
 "ubuntu-16.04" | "ubuntu-18.04")
-	printf -- "Installing %s %s for %s \n" "$PACKAGE_NAME" "$PACKAGE_VERSION" "$DISTRO" | tee -a "$CONF_LOG"
+	printf -- "Installing %s %s for %s \n" "$NAME_PACKAGE" "$VERSION_PACKAGE" "$DISTRO" | tee -a "$CONF_LOG"
 	printf -- "Installing dependencies . . .  it may take some time.\n"
 	sudo apt-get update 
 	sudo apt-get install -y wget git libseccomp-dev curl patch  | tee -a "$CONF_LOG"
 	;;
 
 "rhel-7.3" | "rhel-7.4" | "rhel-7.5")
-	printf -- "Installing %s %s for %s \n" "$PACKAGE_NAME" "$PACKAGE_VERSION" "$DISTRO" | tee -a "$CONF_LOG"
+	printf -- "Installing %s %s for %s \n" "$NAME_PACKAGE" "$VERSION_PACKAGE" "$DISTRO" | tee -a "$CONF_LOG"
 	printf -- "Installing dependencies . . .  it may take some time.\n"
 	sudo yum install -y curl git wget tar gcc glibc-static.s390x make which patch | tee -a "$CONF_LOG"
 	export CC=gcc
 	;;
 
 "sles-12.3" | "sles-15")
-	printf -- "Installing %s %s for %s \n" "$PACKAGE_NAME" "$PACKAGE_VERSION" "$DISTRO" | tee -a "$CONF_LOG"
+	printf -- "Installing %s %s for %s \n" "$NAME_PACKAGE" "$VERSION_PACKAGE" "$DISTRO" | tee -a "$CONF_LOG"
 	printf -- "Installing dependencies . . .  it may take some time.\n"
     sudo zypper install -y curl git wget tar gcc glibc-static.s390x make which patch | tee -a "$CONF_LOG"
     export CC=gcc
@@ -162,8 +164,10 @@ printf -- '\nConfiguration and Installation started \n' | tee -a "$CONF_LOG"
 # Install go
 printf -- "\nInstalling Go . . . \n"  | tee -a "$CONF_LOG"
 printf -- "\nDownloading Build Script for Go . . . \n"  | tee -a "$CONF_LOG"
+rm -rf build_go.sh
 wget -O build_go.sh $GO_INSTALL_URL | tee -a "$CONF_LOG"
 bash build_go.sh -v 1.10.1 | tee -a "$CONF_LOG"
+rm -rf build_go.sh
 
 
 # Set GOPATH if not already set
@@ -201,6 +205,18 @@ printf -- "\nBuilding . . . \n"  | tee -a "$CONF_LOG"
 ./build
 
 printenv >> "$CONF_LOG"
+
+#Exporting Calico ENV to $HOME/setenv.sh for later use
+cd $HOME
+cat << EOF > setenv.sh
+#CALICO ENV
+export GOPATH=$GOPATH
+export PATH=$GOPATH/bin:$PATH
+export ETCD_DATA_DIR=$GOPATH/etcd_temp
+export ETCD_UNSUPPORTED_ARCH=s390x
+export WORKDIR=$WORKDIR
+export LOGDIR=$LOGDIR
+EOF
 
 #### 4. Build `calicoctl` and  `calico/node` image
 export GOBUILD_LOG="${LOGDIR}/go-build-$(date +"%F-%T").log"
@@ -360,6 +376,7 @@ docker tag calico/protoc-s390x:latest calico/protoc:latest-s390x
 export FELIX_LOG="${LOGDIR}/felix-$(date +"%F-%T").log"
 touch $FELIX_LOG
 printf -- "\nBuilding felix . . . \n"  | tee -a "$FELIX_LOG"
+rm -rf $GOPATH/src/github.com/projectcalico/felix
 git clone https://github.com/projectcalico/felix $GOPATH/src/github.com/projectcalico/felix | tee -a "$FELIX_LOG"
 cd $GOPATH/src/github.com/projectcalico/felix
 git checkout v3.2.3 | tee -a "$FELIX_LOG"
@@ -675,6 +692,8 @@ touch $VERIFY_LOG
 printf -- "\nVerifying if all needed images are successfully built/downloaded ? . . . \n"  | tee -a "$VERIFY_LOG"
 cd $WORKDIR
 echo "Required Docker Images: " >> $VERIFY_LOG
+rm -rf docker_images_expected.txt
+rm -rf docker_images.txt
 cat << 'EOF' > docker_images_expected.txt
 calico/dind:latest
 calico/routereflector:latest
@@ -752,34 +771,33 @@ then
     printf -- "                            Testlogs are saved in $TEST_LOG \n" | tee -a "$TEST_LOG" 
     printf -- "##############-----------------------------------------------------------------------------------------------############## \n" | tee -a "$TEST_LOG" 
     cd $GOPATH/src/github.com/projectcalico/node
-    ARCH=s390x make st 2>&1 | tee -a "$TEST_LOG" 
+    ARCH=s390x make st 2>&1 | tee -a "$TEST_LOG"
+    if tail -n 30 "$TEST_LOG" | grep -q "OK (SKIP=9)"; then
+        printf -- "\n                            All tests have passed !!!\n" | tee -a "$TEST_LOG"
+    else
+        printf -- "\n                            There are tests case failures!!! \n" | tee -a "$TEST_LOG"
+        printf -- "\n                            To rerun Calico tests, run the following commands . . . \n"
+        printf -- "\n                            Test logs will be saved in ${LOGDIR}/testLog-DATE-TIME.log  ## \n" | tee -a "$TEST_LOG"
+        printf -- "\n------------------------------------------------------------------------------------------------------------------- \n" | tee -a "$TEST_LOG" 
+        printf -- "\n                            source \$HOME/setenv.sh \n"
+        printf -- "                              cd \$GOPATH/src/github.com/projectcalico/node \n"
+        printf -- "                              ARCH=s390x make st 2>&1 | tee -a \$LOGDIR/testLog-\$(date +"%%F-%%T").log \n"
+        printf -- "\n------------------------------------------------------------------------------------------------------------------- \n" | tee -a "$TEST_LOG" 
+    fi   
 else
     set +x
     cd $GOPATH
-    printf -- "------------------------------------------------------------------------------------------------------------------- \n" | tee -a "$TEST_LOG" 
+    printf -- "\n------------------------------------------------------------------------------------------------------------------- \n" | tee -a "$TEST_LOG" 
     printf -- "       System tests won't run for Calico by default as \"-t\" was not passed to this script in beginning. \n" | tee -a "$TEST_LOG" 
-    printf -- "------------------------------------------------------------------------------------------------------------------- \n" | tee -a "$TEST_LOG" 
+    printf -- "\n------------------------------------------------------------------------------------------------------------------- \n" | tee -a "$TEST_LOG" 
     printf -- " \n" | tee -a "$TEST_LOG" 
     printf -- " \n" | tee -a "$TEST_LOG" 
-    printf -- "                        To run Calico system tests, run the following commands now: \n" | tee -a "$TEST_LOG" 
-    printf -- "------------------------------------------------------------------------------------------------------------------- \n" | tee -a "$TEST_LOG" 
-	printf -- "                       PACKAGE_NAME=\"Calico\" \n" | tee -a "$TEST_LOG" 
-    printf -- "                       PACKAGE_VERSION=\"v3.2.3\" \n" | tee -a "$TEST_LOG" 
-	printf -- "                       export WORKDIR=\${HOME}/\${PACKAGE_NAME}_\${PACKAGE_VERSION} \n" | tee -a "$TEST_LOG" 
-	printf -- "                       export LOGDIR=\${WORKDIR}/logs \n" | tee -a "$TEST_LOG" 
-	if [[ "$GO_FLAG" == "DEFAULT" ]]
-	then
-	    printf -- "                  ##   Set default value for GOPATH \n" | tee -a "$TEST_LOG" 
-	    printf -- "                       export GOPATH=\$HOME/go \n" | tee -a "$TEST_LOG" 
-    else
-	    printf -- "                  ##   GOPATH already set in the system : Value : %s \n" "$GOPATH" | tee -a "$TEST_LOG" 
-    fi
-    printf -- "                       export PATH=\$GOPATH/bin:\$PATH \n" | tee -a "$TEST_LOG" 
-    printf -- "                       export ETCD_DATA_DIR=\$GOPATH/etcd_temp \n" | tee -a "$TEST_LOG" 
-    printf -- "                       export ETCD_UNSUPPORTED_ARCH=s390x \n" | tee -a "$TEST_LOG" 
-    printf -- " \n" | tee -a "$TEST_LOG" 
-    printf -- " \n" | tee -a "$TEST_LOG" 
-    printf -- "                  ##  Running system tests now. Test logs are saved in ${LOGDIR}/testLog-DATE-TIME.log  ## \n" | tee -a "$TEST_LOG" 
+    printf -- "                        To run Calico system tests, run the following commands now: \n" | tee -a "$TEST_LOG"
+    printf -- "                        Test logs are saved in ${LOGDIR}/testLog-DATE-TIME.log  ## \n" | tee -a "$TEST_LOG" 
+    printf -- "\n------------------------------------------------------------------------------------------------------------------- \n" | tee -a "$TEST_LOG" 
+	printf -- "                       source \$HOME/setenv.sh \n" | tee -a "$TEST_LOG" 
     printf -- "                       cd \$GOPATH/src/github.com/projectcalico/node \n" | tee -a "$TEST_LOG" 
-    printf -- "                       ARCH=s390x make st 2>&1 | tee -a \$LOGDIR/\$(date +"%%F-%%T").log \n" | tee -a "$TEST_LOG" 
+	printf -- "                       ARCH=s390x make st 2>&1 | tee -a \$LOGDIR/testLog-\$(date +"%%F-%%T").log \n" | tee -a "$TEST_LOG"
+    printf -- "\n------------------------------------------------------------------------------------------------------------------- \n" | tee -a "$TEST_LOG" 
+
 fi
