@@ -1,5 +1,5 @@
---- go/src/github.com/projectcalico/node_old/calico_test/Dockerfile.s390x.calico_test	2018-12-25 09:45:27.957698510 -0500
-+++ go/src/github.com/projectcalico/node/calico_test/Dockerfile.s390x.calico_test	2018-12-25 09:43:29.337698510 -0500
+--- originalfile	2018-12-25 09:45:27.957698510 -0500
++++ updatedfile	2018-12-25 09:43:29.337698510 -0500
 @@ -59,7 +59,7 @@
  
  # Install etcdctl
