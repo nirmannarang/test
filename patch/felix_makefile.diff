@@ -1,5 +1,5 @@
---- go/src/github.com/projectcalico/felix_old/Makefile	2018-12-25 09:16:19.447698510 -0500
-+++ go/src/github.com/projectcalico/felix/Makefile	2018-12-25 09:15:40.677698510 -0500
+--- originalfile	2018-12-25 09:16:19.447698510 -0500
++++ updatedfile	2018-12-25 09:15:40.677698510 -0500
 @@ -154,7 +154,7 @@
  CALICO_BUILD=calico/go-build:$(GO_BUILD_VER)
  ETCD_VERSION?=v3.3.7
