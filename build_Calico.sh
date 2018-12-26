@@ -197,7 +197,7 @@ mkdir -p $GOPATH/src/github.com/coreos
 mkdir -p $GOPATH/etcd_temp
 cd $GOPATH/src/github.com/coreos
 rm -rf etcd
-git clone git://github.com/coreos/etcd 2>&1 | tee -a "$CONF_LOG"
+git clone https://github.com/coreos/etcd 2>&1 | tee -a "$CONF_LOG"
 cd etcd
 git checkout v3.3.7 2>&1 | tee -a "$CONF_LOG"
 export ETCD_DATA_DIR=$GOPATH/etcd_temp
