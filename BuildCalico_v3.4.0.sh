@@ -406,17 +406,6 @@ sed -i '405d' Makefile
 
 sed -i '38d' Dockerfile.s390x
 
-## Get the yaml binary if not installed, needed for building `calico/node`
-printf -- "\nInstalling YAML binary . . . \n"  | tee -a "$CONF_LOG"
-go get gopkg.in/mikefarah/yq.v1
-cd $GOPATH/bin
-if [[ -e yaml ]]
-then
-    printf -- "\nYaml binary exists. \n" | tee -a "$CONF_LOG"
-else
-    ln -s yq.v1 yaml | tee -a "$CONF_LOG"
-fi
-export PATH=$PATH:$GOPATH/bin
 
 ### Build `calico/node`
 printf -- "\nCreating filesystem/bin and dist directories for keeping binaries . . . \n"  | tee -a "$NODE_LOG"
@@ -521,12 +510,7 @@ sed -i '62s/v3.3.1/v3.3.7/' Dockerfile.s390x.calico_test
 
 
 ### 5.6 Run the test cases
-#Pull s390x images for creating workload
-printf -- "\nPulling s390x images for creating workload . . . \n"  | tee -a "$TEST_LOG"
-docker pull s390x/busybox | tee -a "$TEST_LOG"
-docker tag s390x/busybox busybox
-docker pull s390x/nginx | tee -a "$TEST_LOG"
-docker tag s390x/nginx nginx
+
 
 
 ## Create `Dockerfile.s390x`
