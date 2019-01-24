@@ -1,0 +1,10 @@
+--- originalfile	2019-01-24 04:58:30.217185188 -0500
++++ updatedfile	2019-01-21 05:24:42.391025001 -0500
+@@ -35,7 +35,6 @@
+ RUN apk add --no-cache ip6tables ipset iputils iproute2 conntrack-tools runit file ca-certificates
+ 
+ # Copy our bird binaries in
+-COPY --from=bird /bird* /bin/
+ 
+ # Copy in the filesystem - this contains felix, calico-bgp-daemon etc...
+ COPY filesystem/ /

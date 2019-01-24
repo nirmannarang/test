@@ -1,0 +1,11 @@
+--- originalfile	2019-01-24 04:23:54.697185188 -0500
++++ updatedfile	2019-01-21 04:35:40.561025001 -0500
+@@ -256,7 +256,7 @@
+ 	rm -rf docker-image/bin
+ 	mkdir -p docker-image/bin
+ 	cp bin/calico-typha-$(ARCH) docker-image/bin/
+-	docker build --pull -t $(BUILD_IMAGE):latest-$(ARCH) --build-arg QEMU_IMAGE=$(CALICO_BUILD) --file ./docker-image/Dockerfile.$(ARCH) docker-image
++	docker build  -t $(BUILD_IMAGE):latest-$(ARCH) --build-arg QEMU_IMAGE=$(CALICO_BUILD) --file ./docker-image/Dockerfile.$(ARCH) docker-image
+ ifeq ($(ARCH),amd64)
+ 	docker tag $(BUILD_IMAGE):latest-$(ARCH) $(BUILD_IMAGE):latest
+ endif

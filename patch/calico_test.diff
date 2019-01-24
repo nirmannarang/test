@@ -1,0 +1,11 @@
+--- originalfile	2019-01-24 04:58:30.217185188 -0500
++++ updatedfile	2019-01-21 05:29:40.931025001 -0500
+@@ -59,7 +59,7 @@
+ 
+ # Install etcdctl
+ COPY pkg /pkg/
+-RUN tar -xzf pkg/etcd-v3.3.1-linux-s390x.tar.gz -C /usr/local/bin/
++RUN tar -xzf pkg/etcd-v3.3.7-linux-s390x.tar.gz -C /usr/local/bin/
+ 
+ # The container is used by mounting the code-under-test to /code
+ WORKDIR /code/
