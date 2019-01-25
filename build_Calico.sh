@@ -4,11 +4,11 @@
 
 ################################################################################################################################################################
 #Script     :   build_Calico.sh
-#Description:   The script builds Calico version v3.3.1 on Linux on IBM Z for Rhel(7.4, 7.5, 7.6), Ubuntu(16.04, 18.04) and SLES(12SP3, 15).
+#Description:   The script builds Calico version v3.4.0 on Linux on IBM Z for Rhel(7.4, 7.5, 7.6), Ubuntu(16.04, 18.04) and SLES(12SP3, 15).
 #Maintainer :   LoZ Open Source Ecosystem (https://www.ibm.com/developerworks/community/groups/community/lozopensource) 
 #Info/Notes :   Please refer to the instructions first for Building Calico mentioned in wiki( https://github.com/linux-on-ibm-z/docs/wiki/Building-Calico-3.x ).
 #               This script doesn't handle Docker installation. Install docker first before proceeding.
-#               Build logs can be found in $HOME/Calico_v3.3.1/logs/ . Test logs can be found at $HOME/Calico_v3.3.1/logs/testLog-DATE-TIME.log.
+#               Build logs can be found in $HOME/Calico_v3.4.0/logs/ . Test logs can be found at $HOME/Calico_v3.4.0/logs/testLog-DATE-TIME.log.
 #               By Default, system tests are turned off. To run system tests for Calico, pass argument "-t" to shell script.
 #
 #
@@ -52,7 +52,7 @@ while getopts "h?dyt" opt; do
 done
 
 NAME_PACKAGE="Calico"
-VERSION_PACKAGE="v3.3.1"
+VERSION_PACKAGE="v3.4.0"
 
 cd $HOME
 #Check if directory exists
@@ -69,8 +69,7 @@ export LOGDIR=${WORKDIR}/logs
 #Create configuration log file
 export CONF_LOG="${LOGDIR}/configuration-$(date +"%F-%T").log"
 touch $CONF_LOG
-#PATCH_URL="https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Calico/patch"
-PATCH_URL="https://raw.githubusercontent.com/nirmannarang/test/master/patch/"
+PATCH_URL="https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Calico/patch"
 GO_INSTALL_URL="https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Go/build_go.sh"
 GO_DEFAULT="$HOME/go"
 GO_FLAG="DEFAULT"
@@ -159,7 +158,7 @@ else
 	done
 fi
 
-### 3.1 Install `Go 1.10.1`
+### 3.1 Install `Go 1.11.4`
 printf -- '\nConfiguration and Installation started \n' | tee -a "$CONF_LOG"
 
 # Install go
@@ -167,7 +166,7 @@ printf -- "\nInstalling Go . . . \n"  | tee -a "$CONF_LOG"
 printf -- "\nDownloading Build Script for Go . . . \n"  | tee -a "$CONF_LOG"
 rm -rf build_go.sh
 wget -O build_go.sh $GO_INSTALL_URL 2>&1 | tee -a "$CONF_LOG"
-bash build_go.sh -v 1.10.1 2>&1 | tee -a "$CONF_LOG"
+bash build_go.sh -v 1.11.4 2>&1 | tee -a "$CONF_LOG"
 rm -rf build_go.sh
 
 
@@ -252,7 +251,7 @@ printf -- "\nBuilding calicoctl . . . \n"  | tee -a "$CALICOCTL_LOG"
 rm -rf $GOPATH/src/github.com/projectcalico/calicoctl
 git clone https://github.com/projectcalico/calicoctl $GOPATH/src/github.com/projectcalico/calicoctl 2>&1 | tee -a "$CALICOCTL_LOG"
 cd $GOPATH/src/github.com/projectcalico/calicoctl 
-git checkout v3.3.1 2>&1 | tee -a "$CALICOCTL_LOG"
+git checkout v3.4.0 2>&1 | tee -a "$CALICOCTL_LOG"
 
 ## Build the `calicoctl` binary and `calico/ctl` image
 ARCH=s390x make calico/ctl 2>&1 | tee -a "$CALICOCTL_LOG"
@@ -274,25 +273,7 @@ printf -- "\nBuilding bird . . . \n"  | tee -a "$BIRD_LOG"
 sudo rm -rf $GOPATH/src/github.com/projectcalico/bird
 git clone https://github.com/projectcalico/bird $GOPATH/src/github.com/projectcalico/bird 2>&1 | tee -a "$BIRD_LOG"
 cd $GOPATH/src/github.com/projectcalico/bird 
-git checkout v0.3.2 2>&1 | tee -a "$BIRD_LOG"
-
-## Create `Dockerfile-s390x`
-cat << 'EOF' > Dockerfile-s390x
-FROM s390x/alpine:3.8
-MAINTAINER LoZ Open Source Ecosystem (https://www.ibm.com/developerworks/community/groups/community/lozopensource)
-
-RUN apk update
-RUN apk add alpine-sdk linux-headers autoconf flex bison ncurses-dev readline-dev
-
-WORKDIR /code
-EOF
-
-## Modify `build.sh`, patching build.sh file
-printf -- "\nDownloading patch for bird . . . \n"  | tee -a "$BIRD_LOG"
-curl  -o "bird_build.sh.diff" $PATCH_URL/bird_build.sh.diff 2>&1 | tee -a "$BIRD_LOG"
-printf -- "\nApplying patch to build.sh . . . \n"  | tee -a "$BIRD_LOG"
-patch build.sh bird_build.sh.diff 2>&1 | tee -a "$BIRD_LOG"
-rm -rf bird_build.sh.diff
+git checkout v0.3.3 2>&1 | tee -a "$BIRD_LOG"
 
 ## Run `build.sh` to build 3 executable files (in `dist/s390x/`)
 ARCH=s390x ./build.sh 2>&1 | tee -a "$BIRD_LOG"
@@ -303,7 +284,7 @@ else
   echo "Successfully built bird module." | tee -a "$BIRD_LOG"
 fi
 ## Tag calico/bird image
-docker tag birdbuild-s390x:latest calico/bird:v0.3.2-s390x
+docker tag birdbuild-s390x:latest calico/bird:v0.3.3-s390x
 docker tag birdbuild-s390x:latest calico/bird:latest
 
                    
@@ -315,7 +296,7 @@ printf -- "\nBuilding typha . . . \n"  | tee -a "$TYPHA_LOG"
 rm -rf $GOPATH/src/github.com/projectcalico/typha
 git clone https://github.com/projectcalico/typha $GOPATH/src/github.com/projectcalico/typha 2>&1 | tee -a "$TYPHA_LOG"
 cd $GOPATH/src/github.com/projectcalico/typha 
-git checkout v3.3.1 2>&1 | tee -a "$TYPHA_LOG"
+git checkout v3.4.0 2>&1 | tee -a "$TYPHA_LOG"
 
 ## Modify `Makefile`, patching Makefile
 printf -- "\nDownloading patch for typha Makefile . . . \n"  | tee -a "$TYPHA_LOG"
@@ -323,14 +304,6 @@ curl  -o "typha_makefile.diff" $PATCH_URL/typha_makefile.diff 2>&1 | tee -a "$TY
 printf -- "\nApplying patch to Makefile . . . \n"  | tee -a "$$TYPHA_LOG"
 patch Makefile typha_makefile.diff 2>&1 | tee -a "$TYPHA_LOG"
 rm -rf typha_makefile.diff
-
-## Modify `docker-image/Dockerfile.s390x`, patching Dockerfile.s390x
-cd docker-image
-printf -- "\nDownloading patch for typha Dockerfile.s390x . . . \n"  | tee -a "$TYPHA_LOG"
-curl  -o "typha_dockerfile.diff" $PATCH_URL/typha_dockerfile.diff 2>&1 | tee -a "$TYPHA_LOG"
-printf -- "\nApplying patch to Dockerfile.s390x . . . \n"  | tee -a "$TYPHA_LOG"
-patch Dockerfile.s390x typha_dockerfile.diff 2>&1 | tee -a "$TYPHA_LOG"
-rm -rf typha_dockerfile.diff
 
 ## Build the binaries and docker image for typha
 cd $GOPATH/src/github.com/projectcalico/typha
@@ -380,7 +353,7 @@ printf -- "\nBuilding felix . . . \n"  | tee -a "$FELIX_LOG"
 rm -rf $GOPATH/src/github.com/projectcalico/felix
 git clone https://github.com/projectcalico/felix $GOPATH/src/github.com/projectcalico/felix 2>&1 | tee -a "$FELIX_LOG"
 cd $GOPATH/src/github.com/projectcalico/felix
-git checkout v3.3.1 2>&1 | tee -a "$FELIX_LOG"
+git checkout v3.4.0 2>&1 | tee -a "$FELIX_LOG"
 
 ## Modify Makefile, patching the same
 printf -- "\nDownloading patch for felix Makefile . . . \n"  | tee -a "$FELIX_LOG"
@@ -411,7 +384,7 @@ sudo mkdir -p /opt/cni/bin 2>&1 | tee -a "$CNI_LOG"
 rm -rf $GOPATH/src/github.com/projectcalico/cni-plugin
 git clone https://github.com/projectcalico/cni-plugin.git $GOPATH/src/github.com/projectcalico/cni-plugin 2>&1 | tee -a "$CNI_LOG"
 cd $GOPATH/src/github.com/projectcalico/cni-plugin
-git checkout v3.3.1 2>&1 | tee -a "$CNI_LOG"
+git checkout v3.4.0 2>&1 | tee -a "$CNI_LOG"
 
 ## Build binaries and image
 ARCH=s390x make image 2>&1 | tee -a "$CNI_LOG"
@@ -427,7 +400,7 @@ fi
 printf -- "\nCopying cni-plugin binaries to /opt/cni/bin . . . \n"  | tee -a "$CNI_LOG"
 sudo cp bin/s390x/* /opt/cni/bin 2>&1 | tee -a "$CNI_LOG"
 docker tag calico/cni:latest-s390x calico/cni:latest
-docker tag calico/cni:latest quay.io/calico/cni-s390x:v3.3.1
+docker tag calico/cni:latest quay.io/calico/cni-s390x:v3.4.0
 
 
 ### 4.7 Build image `calico/node`
@@ -438,7 +411,7 @@ printf -- "\nBuilding Calico node . . . \n"  | tee -a "$NODE_LOG"
 rm -rf $GOPATH/src/github.com/projectcalico/node
 git clone https://github.com/projectcalico/node $GOPATH/src/github.com/projectcalico/node 2>&1 | tee -a "$NODE_LOG"
 cd $GOPATH/src/github.com/projectcalico/node
-git checkout v3.3.1 2>&1 | tee -a "$NODE_LOG"
+git checkout v3.4.0 2>&1 | tee -a "$NODE_LOG"
 
 ## Modify `Makefile`, patching the same
 printf -- "\nDownloading patch for node Makefile . . . \n"  | tee -a "$NODE_LOG"
@@ -453,18 +426,6 @@ curl  -o "node_dockerfile.diff" $PATCH_URL/node_dockerfile.diff 2>&1 | tee -a "$
 printf -- "\nApplying patch to Dockerfile.s390x . . . \n"  | tee -a "$NODE_LOG"
 patch Dockerfile.s390x node_dockerfile.diff 2>&1 | tee -a "$NODE_LOG"
 rm -rf node_dockerfile.diff
-
-## Get the yaml binary if not installed, needed for building `calico/node`
-printf -- "\nInstalling YAML binary . . . \n"  | tee -a "$CONF_LOG"
-go get gopkg.in/mikefarah/yq.v1
-cd $GOPATH/bin
-if [[ -e yaml ]]
-then
-    printf -- "\nYaml binary exists. \n" | tee -a "$CONF_LOG"
-else
-    ln -s yq.v1 yaml 2>&1 | tee -a "$CONF_LOG"
-fi
-export PATH=$PATH:$GOPATH/bin
 
 ### Build `calico/node`
 printf -- "\nCreating filesystem/bin and dist directories for keeping binaries . . . \n"  | tee -a "$NODE_LOG"
@@ -489,7 +450,7 @@ else
 	exit 1
 fi
 
-docker tag calico/node:latest-s390x quay.io/calico/node-s390x:v3.3.1
+docker tag calico/node:latest-s390x quay.io/calico/node-s390x:v3.4.0
 docker tag calico/node:latest-s390x calico/node
 
 
@@ -569,13 +530,6 @@ rm -rf calico_test.diff
 
 
 ### 5.6 Run the test cases
-#Pull s390x images for creating workload
-printf -- "\nPulling s390x images for creating workload . . . \n"  | tee -a "$TEST_LOG"
-docker pull s390x/busybox 2>&1 | tee -a "$TEST_LOG"
-docker tag s390x/busybox busybox
-docker pull s390x/nginx 2>&1 | tee -a "$TEST_LOG"
-docker tag s390x/nginx nginx
-
 ## Modify `Dockerfile.s390x` for workload
 printf -- "\nMaking required changes to node/workload for s390x . . . \n"  | tee -a "$TEST_LOG"
 cd $GOPATH/src/github.com/projectcalico/node/workload
@@ -600,8 +554,8 @@ quay.io/coreos/etcd:v3.3.7
 quay.io/coreos/etcd:v3.3.7-s390x
 calico/node:latest
 calico/node:latest-s390x
-quay.io/calico/node-s390x:v3.3.1
-quay.io/calico/cni-s390x:v3.3.1
+quay.io/calico/node-s390x:v3.4.0
+quay.io/calico/cni-s390x:v3.4.0
 calico/cni:latest
 calico/cni:latest-s390x
 calico/felix:latest-s390x
@@ -609,7 +563,7 @@ calico/protoc-s390x:latest
 calico/protoc:latest-s390x
 calico/typha:latest-s390x
 calico/bird:latest
-calico/bird:v0.3.2-s390x
+calico/bird:v0.3.3-s390x
 birdbuild-s390x:latest
 calico/ctl:latest-s390x
 calico/go-build:latest
