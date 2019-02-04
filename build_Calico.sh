@@ -417,11 +417,11 @@ cd $GOPATH/src/github.com/projectcalico/node
 git checkout v3.5.0 2>&1 | tee -a "$NODE_LOG"
 
 ## Modify `Makefile`, patching the same
-printf -- "\nDownloading patch for node Makefile . . . \n"  | tee -a "$NODE_LOG"
-curl  -o "node_makefile.diff" $PATCH_URL/node_makefile.diff 2>&1 | tee -a "$NODE_LOG"
-printf -- "\nApplying patch to Makefile . . . \n"  | tee -a "$NODE_LOG"
-patch Makefile node_makefile.diff 2>&1 | tee -a "$NODE_LOG"
-rm -rf node_makefile.diff
+# printf -- "\nDownloading patch for node Makefile . . . \n"  | tee -a "$NODE_LOG"
+# curl  -o "node_makefile.diff" $PATCH_URL/node_makefile.diff 2>&1 | tee -a "$NODE_LOG"
+# printf -- "\nApplying patch to Makefile . . . \n"  | tee -a "$NODE_LOG"
+# patch Makefile node_makefile.diff 2>&1 | tee -a "$NODE_LOG"
+# rm -rf node_makefile.diff
 sed -i '112s/v0.3.3-0-g1e8dd375/v0.3.3/' Makefile
 sed -i '116s/master/latest/' Makefile
 sed -i '117s/master/latest/' Makefile
@@ -431,11 +431,11 @@ sed -i '408d' Makefile
 sed -i '416d' Makefile
 
 ## Modify `Dockerfile.s390x`, patching the same
-printf -- "\nDownloading patch for node Dockerfile.s390x . . . \n"  | tee -a "$NODE_LOG"
-curl  -o "node_dockerfile.diff" $PATCH_URL/node_dockerfile.diff 2>&1 | tee -a "$NODE_LOG"
-printf -- "\nApplying patch to Dockerfile.s390x . . . \n"  | tee -a "$NODE_LOG"
-patch Dockerfile.s390x node_dockerfile.diff 2>&1 | tee -a "$NODE_LOG"
-rm -rf node_dockerfile.diff
+# printf -- "\nDownloading patch for node Dockerfile.s390x . . . \n"  | tee -a "$NODE_LOG"
+# curl  -o "node_dockerfile.diff" $PATCH_URL/node_dockerfile.diff 2>&1 | tee -a "$NODE_LOG"
+# printf -- "\nApplying patch to Dockerfile.s390x . . . \n"  | tee -a "$NODE_LOG"
+# patch Dockerfile.s390x node_dockerfile.diff 2>&1 | tee -a "$NODE_LOG"
+# rm -rf node_dockerfile.diff
 sed -i '38d' Dockerfile.s390x
 
 ### Build `calico/node`
