@@ -1,0 +1,11 @@
+--- /home/test/lib_cc_configure.bzl_old	2019-04-26 11:09:23.996676468 +0000
++++ tools/cpp/lib_cc_configure.bzl	2019-04-26 11:10:33.136676468 +0000
+@@ -188,6 +188,8 @@
+     result = repository_ctx.execute(["uname", "-m"])
+     if result.stdout.strip() in ["power", "ppc64le", "ppc", "ppc64"]:
+         return "ppc"
++    if result.stdout.strip() in ["s390x"]:
++        return "s390x"
+     if result.stdout.strip() in ["arm", "armv7l"]:
+         return "arm"
+     if result.stdout.strip() in ["aarch64"]:
