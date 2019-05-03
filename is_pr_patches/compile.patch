@@ -1,11 +1,11 @@
---- /home/test/compile.sh_old	2019-04-26 14:09:41.565587967 +0000
-+++ scripts/bootstrap/compile.sh	2019-04-26 14:10:18.415587967 +0000
+--- /home/test/compile_old.sh   2019-05-03 13:09:30.727267790 +0000
++++ bazel/scripts/bootstrap/compile.sh  2019-05-03 13:14:33.567236194 +0000
 @@ -127,7 +127,7 @@
    # Useful if your system chooses too small of a max heap for javac.
    # We intentionally rely on shell word splitting to allow multiple
    # additional arguments to be passed to javac.
--  run "${JAVAC}" -classpath "${classpath}" -sourcepath "${sourcepath}" \ 
-+  run "${JAVAC}" -J-Xms1g -J-Xmx1g -classpath "${classpath}" -sourcepath "${sourcepath}" \ 
+-  run "${JAVAC}" -classpath "${classpath}" -sourcepath "${sourcepath}" \
++  run "${JAVAC}" -J-Xms1g -J-Xmx1g -classpath "${classpath}" -sourcepath "${sourcepath}" \
        -d "${output}/classes" -source "$JAVA_VERSION" -target "$JAVA_VERSION" \
        -encoding UTF-8 ${BAZEL_JAVAC_OPTS} "@${paramfile}"
- 
+
