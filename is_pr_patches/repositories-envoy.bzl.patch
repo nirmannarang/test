@@ -1,0 +1,11 @@
+--- /home/test/repositories.bzl_old	2019-05-29 11:04:32.478002721 +0000
++++ bazel/repositories.bzl	2019-05-29 11:05:41.087982704 +0000
+@@ -629,5 +629,8 @@
+ def _is_linux_ppc(ctxt):
+     return _is_linux(ctxt) and _is_arch(ctxt, "ppc")
+ 
++def _is_linux_s390x(ctxt):
++    return _is_linux(ctxt) and _is_arch(ctxt, "s390x")
++
+ def _is_linux_x86_64(ctxt):
+     return _is_linux(ctxt) and _is_arch(ctxt, "x86_64")

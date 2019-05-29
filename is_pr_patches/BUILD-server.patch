@@ -1,0 +1,18 @@
+--- /home/test/BUILD-server_old	2019-05-29 11:18:37.557742482 +0000
++++ source/server/BUILD	2019-05-29 11:21:09.107692435 +0000
+@@ -141,6 +141,7 @@
+     name = "options_lib",
+     srcs = ["options_impl.cc"] + select({
+         "//bazel:linux_x86_64": ["options_impl_platform_linux.cc"],
++        "//bazel:linux_s390x": ["options_impl_platform_linux.cc"],
+         "//bazel:linux_aarch64": ["options_impl_platform_linux.cc"],
+         "//conditions:default": ["options_impl_platform_default.cc"],
+     }),
+@@ -149,6 +150,7 @@
+         "options_impl_platform.h",
+     ] + select({
+         "//bazel:linux_x86_64": ["options_impl_platform_linux.h"],
++        "//bazel:linux_s390x": ["options_impl_platform_linux.h"],
+         "//bazel:linux_aarch64": ["options_impl_platform_linux.h"],
+         "//conditions:default": [],
+     }),
