@@ -1,0 +1,43 @@
+diff --git a/home/test/WORKSPACE_old b/WORKSPACE
+index 0d47903..041d2fb 100644
+--- a/home/test/WORKSPACE_old
++++ b/WORKSPACE
+@@ -32,21 +32,33 @@ bind(
+     actual = "//external:ssl",
+ )
+ 
++local_repository(
++    name = "boringssl",
++    path = "/home/test/boringssl",
++)
++
++bind(
++    name = "ssl",
++    actual = "@boringssl//:ssl",
++)
++
+ # envoy commit date 04/10/2019
+ # bazel version: 0.22.0
+ 
+ # When updating envoy sha manually please update the sha in istio.deps file also
+ #
+ # Determine SHA256 `wget https://github.com/envoyproxy/envoy/archive/COMMIT.tar.gz && sha256sum COMMIT.tar.gz`
+-ENVOY_SHA = "ac7aa5ac8a815e5277b4d4659c5c02145fa1d56f"
+ ENVOY_SHA256 = "3f13facc893ef0c5063c7391a1ffca8de0f52425c8a7a49ef45e69dbb5e7304b"
+ LOCAL_ENVOY_PROJECT = "/PATH/TO/ENVOY"
+ 
+-http_archive(
++local_repository(
+     name = "envoy",
+-    strip_prefix = "envoy-" + ENVOY_SHA,
+-    url = "https://github.com/envoyproxy/envoy/archive/" + ENVOY_SHA + ".tar.gz",
+-    sha256 = ENVOY_SHA256,
++    path = "/home/test/envoy",
++)
++
++local_repository(
++    name = "rules_foreign_cc",
++    path = "/home/test/rules_foreign_cc",
+ )
+ 
+ # TODO(silentdai) Use bazel args to select envoy between local or http
