@@ -3,7 +3,7 @@
 # LICENSE: Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 #
 # Instructions:
-# Download build script: wget https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/IstioProxy/build_istio_proxy.sh
+# Download build script: wget https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/IstioProxy/1.1.7/build_istio_proxy.sh
 # Execute build script: bash build_istio_proxy.sh    (provide -h for help)
 #
 
@@ -12,14 +12,15 @@ set -e -o pipefail
 PACKAGE_NAME="Istio Proxy"
 PACKAGE_VERSION="1.1.7"
 CURDIR="$(pwd)"
-REPO_URL="https://69c345ef7a07b3a1eccdbad19819905fb43d457a@raw.github.ibm.com/cgopi/Scripts/master/Istio_proxy/patch"
+REPO_URL="https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/IstioProxy/1.1.7/patch"
 ISTIO_PROXY_REPO_URL="https://github.com/istio/proxy.git"
 LOG_FILE="$CURDIR/logs/${PACKAGE_NAME}-${PACKAGE_VERSION}-$(date +"%F-%T").log"
 FORCE="false"
 TESTS="false"
 PROXY_DEBUG_BIN_PATH="$CURDIR/proxy/debug"
 PROXY_RELEASE_BIN_PATH="$CURDIR/proxy/release"
-source /home/test/.bashrc
+source /home/test/.bashrc 
+
 trap cleanup 0 1 2 ERR
 
 #Check if directory exists
