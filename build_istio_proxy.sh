@@ -19,7 +19,7 @@ FORCE="false"
 TESTS="false"
 PROXY_DEBUG_BIN_PATH="$CURDIR/proxy/debug"
 PROXY_RELEASE_BIN_PATH="$CURDIR/proxy/release"
-
+source /home/test/.bashrc
 trap cleanup 0 1 2 ERR
 
 #Check if directory exists
