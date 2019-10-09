@@ -22,20 +22,6 @@
 set -e
 set -o pipefail
 
-
-sudo apt-get update
-sudo apt-get install -y apt-transport-https  ca-certificates  curl software-properties-common wget
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-sudo add-apt-repository "deb [arch=s390x] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-sudo apt-get update
-sudo apt-get install -y docker-ce
-sudo service docker start
-sleep 60s	
-sudo sudo chmod ugo+rw /var/run/docker.sock
-sudo service docker status
-docker version	
-docker ps
-
 FORCE="false"
 TESTS="false"
 
