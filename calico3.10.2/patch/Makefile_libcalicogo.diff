@@ -1,0 +1,47 @@
+--- /root/Makefile_libcalicogo_old	2020-01-06 10:50:44.115005219 +0000
++++ Makefile	2020-01-06 10:58:06.975035232 +0000
+@@ -193,7 +193,7 @@
+ 	docker run \
+ 		--net=host --name st-apiserver \
+ 		--detach \
+-		gcr.io/google_containers/hyperkube-amd64:${K8S_VERSION} \
++		gcr.io/google_containers/hyperkube-s390x:${K8S_VERSION} \
+ 		/hyperkube apiserver \
+ 			--bind-address=0.0.0.0 \
+ 			--insecure-bind-address=0.0.0.0 \
+@@ -210,7 +210,7 @@
+ 	docker run \
+ 		--net=host --name st-controller-manager \
+ 		--detach \
+-		gcr.io/google_containers/hyperkube-amd64:${K8S_VERSION} \
++		gcr.io/google_containers/hyperkube-s390x:${K8S_VERSION} \
+ 		/hyperkube controller-manager \
+                         --master=127.0.0.1:8080 \
+                         --min-resync-period=3m \
+@@ -224,7 +224,7 @@
+ 	    --net=host \
+ 	    --rm \
+ 		-v  $(CURDIR):/manifests \
+-		gcr.io/google_containers/hyperkube-amd64:${K8S_VERSION} \
++		gcr.io/google_containers/hyperkube-s390x:${K8S_VERSION} \
+ 		/hyperkube kubectl \
+ 		--server=http://127.0.0.1:8080 \
+ 		apply -f /manifests/test/crds.yaml
+@@ -234,7 +234,7 @@
+ 	    --net=host \
+ 	    --rm \
+ 		-v  $(CURDIR):/manifests \
+-		gcr.io/google_containers/hyperkube-amd64:${K8S_VERSION} \
++		gcr.io/google_containers/hyperkube-s390x:${K8S_VERSION} \
+ 		/hyperkube kubectl \
+ 		--server=http://127.0.0.1:8080 \
+ 		apply -f /manifests/test/mock-node.yaml
+@@ -245,7 +245,7 @@
+ 	    --net=host \
+ 	    --rm \
+ 		-v  $(CURDIR):/manifests \
+-		gcr.io/google_containers/hyperkube-amd64:${K8S_VERSION} \
++		gcr.io/google_containers/hyperkube-s390x:${K8S_VERSION} \
+ 		/hyperkube kubectl \
+ 		--server=http://localhost:8080 \
+ 		apply -f /manifests/test/namespaces.yaml
