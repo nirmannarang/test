@@ -1,0 +1,54 @@
+--- /root/Makefile_node_old	2020-01-16 14:11:34.423452392 +0000
++++ Makefile	2020-01-17 06:51:27.921422014 +0000
+@@ -96,12 +96,12 @@
+ endif
+ 
+ # Versions and location of dependencies used in the build.
+-BIRD_VER?=v0.3.3-138-ge37e4770
++BIRD_VER?=v0.3.3
+ BIRD_IMAGE ?= calico/bird:$(BIRD_VER)-$(ARCH)
+ 
+ # Versions and locations of dependencies used in tests.
+-CALICOCTL_VER?=master
+-CNI_VER?=master
++CALICOCTL_VER?=latest
++CNI_VER?=latest
+ TEST_CONTAINER_NAME_VER?=latest
+ CTL_CONTAINER_NAME?=calico/ctl:$(CALICOCTL_VER)-$(ARCH)
+ TEST_CONTAINER_NAME?=calico/test:$(TEST_CONTAINER_NAME_VER)-$(ARCH)
+@@ -109,7 +109,7 @@
+ # If building on amd64 omit the arch in the container name.  Fixme!
+ ETCD_IMAGE?=quay.io/coreos/etcd:$(ETCD_VERSION)
+ ifneq ($(BUILDARCH),amd64)
+-        ETCD_IMAGE=$(ETCD_IMAGE)-$(ARCH)
++        ETCD_IMAGE:=$(ETCD_IMAGE)-$(ARCH)
+ endif
+ 
+ K8S_VERSION?=v1.14.1
+@@ -328,7 +328,7 @@
+ 	docker run --rm -v $(CURDIR)/dist/bin:/go/bin:rw $(CALICO_BUILD) /bin/sh -c "\
+ 	  echo; echo calico-node-$(ARCH) -v;         /go/bin/calico-node-$(ARCH) -v; \
+ 	"
+-	docker build --pull -t $(BUILD_IMAGE):latest-$(ARCH) . --build-arg BIRD_IMAGE=$(BIRD_IMAGE) --build-arg QEMU_IMAGE=$(CALICO_BUILD) --build-arg ver=$(CALICO_GIT_VER) -f ./Dockerfile.$(ARCH)
++	docker build -t $(BUILD_IMAGE):latest-$(ARCH) . --build-arg BIRD_IMAGE=$(BIRD_IMAGE) --build-arg QEMU_IMAGE=$(CALICO_BUILD) --build-arg ver=$(CALICO_GIT_VER) -f ./Dockerfile.$(ARCH)
+ 	touch $@
+ 
+ # ensure we have a real imagetag
+@@ -480,7 +480,7 @@
+ # variables.  These are used for the STs.
+ dist/calicoctl:
+ 	-docker rm -f calicoctl
+-	docker pull $(CTL_CONTAINER_NAME)
++	docker $(CTL_CONTAINER_NAME)
+ 	docker create --name calicoctl $(CTL_CONTAINER_NAME)
+ 	docker cp calicoctl:calicoctl dist/calicoctl && \
+ 	  test -e dist/calicoctl && \
+@@ -489,7 +489,7 @@
+ 
+ dist/calico-cni-plugin dist/calico-ipam-plugin:
+ 	-docker rm -f calico-cni
+-	docker pull calico/cni:$(CNI_VER)
++	docker calico/cni:$(CNI_VER)
+ 	docker create --name calico-cni calico/cni:$(CNI_VER)
+ 	docker cp calico-cni:/opt/cni/bin/calico dist/calico-cni-plugin && \
+ 	  test -e dist/calico-cni-plugin && \

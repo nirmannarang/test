@@ -1,0 +1,36 @@
+--- /root/Dockerfile.s390x_node_old	2020-01-16 14:36:38.573808252 +0000
++++ Dockerfile.s390x	2020-01-16 14:39:04.763908210 +0000
+@@ -25,7 +25,7 @@
+ RUN apt-get update && \
+ apt-get upgrade -y && \
+ apt-get install -y --no-install-recommends \
+-    gpg gpg-agent libelf-dev libmnl-dev libc-dev iptables libgcc-8-dev \
++    gpg gpg-agent libelf-dev libmnl-dev libc-dev iptables libgcc-8-dev zlib1g zlib1g-dev zlibc \
+     bash-completion binutils binutils-dev make git curl \
+     ca-certificates xz-utils gcc pkg-config bison flex build-essential && \
+ apt-get purge --auto-remove && \
+@@ -34,11 +34,14 @@
+ WORKDIR /tmp
+ 
+ RUN \
+-git clone --depth 1 -b master git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git && \
+-cd linux/tools/bpf/bpftool/ && \
++git clone -b master git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git && \
++cd linux && \
++git checkout 222ee9087a730b1df08d09baed0d03626e67600f && \
++cd tools/bpf/bpftool/ && \
+ sed -i '/CFLAGS += -O2/a CFLAGS += -static' Makefile && \
+ sed -i 's/LIBS = -lelf $(LIBBPF)/LIBS = -lelf -lz $(LIBBPF)/g' Makefile && \
+ printf 'feature-libbfd=0\nfeature-libelf=1\nfeature-bpf=1\nfeature-libelf-mmap=1' >> FEATURES_DUMP.bpftool && \
++printf '\nfeature-zlib=1' >> FEATURES_DUMP.bpftool && \
+ FEATURES_DUMP=`pwd`/FEATURES_DUMP.bpftool make -j `getconf _NPROCESSORS_ONLN` && \
+ strip bpftool && \
+ ldd bpftool 2>&1 | grep -q -e "Not a valid dynamic program" \
+@@ -63,7 +66,6 @@
+ RUN apk add --no-cache ip6tables ipset iputils iproute2 conntrack-tools runit file ca-certificates
+ 
+ # Copy our bird binaries in
+-COPY --from=bird /bird* /bin/
+ 
+ # Copy in the filesystem - this contains felix, calico-bgp-daemon etc...
+ COPY filesystem/ /
