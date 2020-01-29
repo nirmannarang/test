@@ -302,7 +302,7 @@ patch Makefile Makefile_libcalicogo.diff 2>&1 | tee -a "$LIBCALICOGO_LOG"
 rm -rf Makefile_libcalicogo.diff
 
 ## Build the `libcalico-go`
-ARCH=s390x make all 2>&1 | tee -a "$LIBCALICOGO_LOG"
+ARCH=s390x make all || true 2>&1 | tee -a "$LIBCALICOGO_LOG"
 
 ### 4.3 Build `confd`
 export CONFD_LOG="${LOGDIR}/confd-$(date +"%F-%T").log"
@@ -323,7 +323,7 @@ export CALICOCTL_LOG="${LOGDIR}/calicoctl-$(date +"%F-%T").log"
 touch $CALICOCTL_LOG
 printf -- "\nBuilding calicoctl . . . \n"  | tee -a "$CALICOCTL_LOG"
 ## Download the source code
-rm -rf $GOPATH/src/github.com/projectcalico/calicoctl
+sudo rm -rf $GOPATH/src/github.com/projectcalico/calicoctl
 git clone https://github.com/projectcalico/calicoctl $GOPATH/src/github.com/projectcalico/calicoctl 2>&1 | tee -a "$CALICOCTL_LOG"
 cd $GOPATH/src/github.com/projectcalico/calicoctl 
 git checkout v${CALICO_VERSION} 2>&1 | tee -a "$CALICOCTL_LOG"
