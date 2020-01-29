@@ -309,13 +309,13 @@ export CONFD_LOG="${LOGDIR}/confd-$(date +"%F-%T").log"
 touch $CONFD_LOG
 printf -- "\nBuilding confd . . . \n"  | tee -a "$CONFD_LOG"
 ## Download the source code
-rm -rf $GOPATH/src/github.com/projectcalico/confd
+sudo rm -rf $GOPATH/src/github.com/projectcalico/confd
 git clone https://github.com/projectcalico/confd.git $GOPATH/src/github.com/projectcalico/confd 2>&1 | tee -a "$CONFD_LOG"
 cd $GOPATH/src/github.com/projectcalico/confd 
 git checkout v3.10.0-0.dev 2>&1 | tee -a "$CONFD_LOG"
 
 ## Build the `confd`
-ARCH=s390x make build 2>&1 | tee -a "$CONFD_LOG"
+sudo ARCH=s390x make build 2>&1 | tee -a "$CONFD_LOG"
 
 
 ### 4.4 Build `calicoctl` binary and `calico/ctl` image
@@ -329,7 +329,7 @@ cd $GOPATH/src/github.com/projectcalico/calicoctl
 git checkout v${CALICO_VERSION} 2>&1 | tee -a "$CALICOCTL_LOG"
 
 ## Build the `calicoctl` binary and `calico/ctl` image
-ARCH=s390x make image 2>&1 | tee -a "$CALICOCTL_LOG"
+sudo ARCH=s390x make image 2>&1 | tee -a "$CALICOCTL_LOG"
 
 if grep -Fxq "Successfully tagged calico/ctl:latest-s390x" $CALICOCTL_LOG
 then
