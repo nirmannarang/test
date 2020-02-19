@@ -368,7 +368,7 @@ export TYPHA_LOG="${LOGDIR}/typha-$(date +"%F-%T").log"
 touch $TYPHA_LOG
 printf -- "\nBuilding typha . . . \n"  | tee -a "$TYPHA_LOG"
 ## Download the source code
-rm -rf $GOPATH/src/github.com/projectcalico/typha
+sudo rm -rf $GOPATH/src/github.com/projectcalico/typha
 git clone https://github.com/projectcalico/typha $GOPATH/src/github.com/projectcalico/typha 2>&1 | tee -a "$TYPHA_LOG"
 cd $GOPATH/src/github.com/projectcalico/typha 
 git checkout v${CALICO_VERSION} 2>&1 | tee -a "$TYPHA_LOG"
@@ -382,7 +382,7 @@ rm -rf Makefile-typha.diff
 
 ## Build the binaries and docker image for typha
 cd $GOPATH/src/github.com/projectcalico/typha
-ARCH=s390x make image 2>&1 | tee -a "$TYPHA_LOG"
+sudo ARCH=s390x make image 2>&1 | tee -a "$TYPHA_LOG"
 
 if grep -Fxq "Successfully tagged calico/typha:latest-s390x" $TYPHA_LOG
 then
