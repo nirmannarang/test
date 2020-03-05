@@ -1,0 +1,11 @@
+--- Makefile_old	2020-03-03 10:59:19.324202772 +0000
++++ Makefile	2020-03-03 12:26:33.552374899 +0000
+@@ -285,7 +285,7 @@
+ 	rm -rf docker-image/bin
+ 	mkdir -p docker-image/bin
+ 	cp bin/calico-felix-$(ARCH) docker-image/bin/
+-	docker build --pull -t $(BUILD_IMAGE):latest-$(ARCH) --build-arg QEMU_IMAGE=$(CALICO_BUILD) --file ./docker-image/Dockerfile.$(ARCH) docker-image
++	docker build -t $(BUILD_IMAGE):latest-$(ARCH) --build-arg QEMU_IMAGE=$(CALICO_BUILD) --file ./docker-image/Dockerfile.$(ARCH) docker-image
+ ifeq ($(ARCH),amd64)
+ 	docker tag $(BUILD_IMAGE):latest-$(ARCH) $(BUILD_IMAGE):latest
+ endif
