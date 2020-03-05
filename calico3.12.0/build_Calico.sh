@@ -4,15 +4,15 @@
 
 ################################################################################################################################################################
 #Script     :   build_Calico.sh
-#Description:   The script builds Calico version v3.10.2 on Linux on IBM Z for Rhel(7.5, 7.6, 7.7, 8.0), Ubuntu(16.04, 18.04, 19.10) and SLES(12SP4, 15 SP1).
+#Description:   The script builds Calico version v3.12.0 on Linux on IBM Z for Rhel(7.5, 7.6, 7.7, 8.0), Ubuntu(16.04, 18.04, 19.10) and SLES(12SP4, 15 SP1).
 #Maintainer :   LoZ Open Source Ecosystem (https://www.ibm.com/developerworks/community/groups/community/lozopensource) 
 #Info/Notes :   Please refer to the instructions first for Building Calico mentioned in wiki( https://github.com/linux-on-ibm-z/docs/wiki/Building-Calico-3.x ).
 #               This script doesn't handle Docker installation. Install docker first before proceeding.
-#               Build logs can be found in $HOME/Calico_v3.10.2/logs/ . Test logs can be found at $HOME/Calico_v3.10.2/logs/testLog-DATE-TIME.log.
+#               Build logs can be found in $HOME/Calico_v3.12.0/logs/ . Test logs can be found at $HOME/Calico_v3.12.0/logs/testLog-DATE-TIME.log.
 #               By Default, system tests are turned off. To run system tests for Calico, pass argument "-t" to shell script.
 #
 #
-#Download build script :   wget https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Calico/3.10.2/build_Calico.sh
+#Download build script :   wget https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Calico/3.12.0/build_Calico.sh
 #Run build script      :   bash build_Calico.sh       #(To only build Calico, provide -h for help)
 #                          bash build_Calico.sh -t    #(To build Calico and run system tests)
 #               
@@ -52,11 +52,10 @@ while getopts "h?dyt" opt; do
 done
 
 NAME_PACKAGE="Calico"
-VERSION_PACKAGE="v3.10.2"
-CALICO_VERSION="3.10.2"
+VERSION_PACKAGE="v3.12.0"
+CALICO_VERSION="3.12.0"
 ETCD_VERSION="3.3.7"
-GOBUILD_VERSION="0.23"
-BIRD_VERSION="0.3.3"
+GOBUILD_VERSION="0.24"
 
 cd $HOME
 #Check if directory exists
@@ -74,19 +73,12 @@ export LOGDIR=${WORKDIR}/logs
 export CONF_LOG="${LOGDIR}/configuration-$(date +"%F-%T").log"
 touch $CONF_LOG
 #PATCH_URL="https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Calico/${CALICO_VERSION}/patch"
-PATCH_URL="https://raw.githubusercontent.com/nirmannarang/test/master/calico3.10.2/patch"
+PATCH_URL="https://raw.githubusercontent.com/nirmannarang/test/master/calico3.12.0/patch"
 GO_INSTALL_URL="https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Go/1.12.5/build_go.sh"
 GO_DEFAULT="$HOME/go"
 GO_FLAG="DEFAULT"
 
-if [ -f "/etc/os-release" ]; then
-    source "/etc/os-release"
-else
-    cat /etc/redhat-release >>"${CONF_LOG}"
-    ID="rhel"
-    VERSION_ID="6.x"
-    PRETTY_NAME="Red Hat Enterprise Linux 6.x"
-fi
+source "/etc/os-release"
 
 if command -v "sudo" >/dev/null; then
     printf -- 'Sudo : Yes\n' >>"$CONF_LOG"
@@ -163,7 +155,7 @@ else
 	done
 fi
 
-### 3.1 Install `Go 1.11.4`
+### 3.1 Install `Go 1.11.5`
 printf -- '\nConfiguration and Installation started \n' | tee -a "$CONF_LOG"
 
 # Install go
@@ -171,7 +163,7 @@ printf -- "\nInstalling Go . . . \n"  | tee -a "$CONF_LOG"
 printf -- "\nDownloading Build Script for Go . . . \n"  | tee -a "$CONF_LOG"
 rm -rf build_go.sh
 wget -O build_go.sh $GO_INSTALL_URL 2>&1 | tee -a "$CONF_LOG"
-bash build_go.sh -v 1.11.4 2>&1 | tee -a "$CONF_LOG"
+bash build_go.sh -v 1.11.5 2>&1 | tee -a "$CONF_LOG"
 rm -rf build_go.sh
 
 
@@ -254,9 +246,33 @@ EOF
 #### 4. Build `calicoctl` and  `calico/node` image
 export GOBUILD_LOG="${LOGDIR}/go-build-$(date +"%F-%T").log"
 touch $GOBUILD_LOG
-printf -- "\nBuilding go-build . . . \n"  | tee -a "$GOBUILD_LOG"
+printf -- "\nBuilding go-build v0.20 . . . \n"  | tee -a "$GOBUILD_LOG"
 ### 4.1 Build `go-build`
 ##This builds a docker image calico/go-build that is used to build other components
+##v0.20 for bpftool docker image
+rm -rf $GOPATH/src/github.com/projectcalico/go-build
+git clone https://github.com/projectcalico/go-build $GOPATH/src/github.com/projectcalico/go-build 2>&1 | tee -a "$GOBUILD_LOG"
+cd $GOPATH/src/github.com/projectcalico/go-build
+git checkout v0.20 2>&1 | tee -a "$GOBUILD_LOG"
+
+## Then  build `calico/go-build-s390x` image
+ARCH=s390x make image 2>&1 | tee -a "$GOBUILD_LOG"
+if grep -Fxq "Successfully tagged calico/go-build:latest-s390x" $GOBUILD_LOG
+then
+    echo "Successfully built calico/go-build" | tee -a "$GOBUILD_LOG"
+else
+    echo "go-build FAILED, Stopping further build !!! Check logs at $GOBUILD_LOG" | tee -a "$GOBUILD_LOG"
+	exit 1
+fi
+docker tag calico/go-build:latest-s390x calico/go-build:v0.20
+##Retag v0.34 to latest-s390x for further builds
+docker rmi -f calico/go-build:latest-s390x
+
+
+printf -- "\nBuilding go-build v0.34 . . . \n"  | tee -a "$GOBUILD_LOG"
+### 4.1 Build `go-build`
+##This builds a docker image calico/go-build that is used to build other components
+##v0.34 for other calico components being felix, calicoctl, node etc.
 rm -rf $GOPATH/src/github.com/projectcalico/go-build
 git clone https://github.com/projectcalico/go-build $GOPATH/src/github.com/projectcalico/go-build 2>&1 | tee -a "$GOBUILD_LOG"
 cd $GOPATH/src/github.com/projectcalico/go-build
@@ -279,43 +295,15 @@ else
     echo "go-build FAILED, Stopping further build !!! Check logs at $GOBUILD_LOG" | tee -a "$GOBUILD_LOG"
 	exit 1
 fi
-
-#docker tag calico/go-build:latest-s390x calico/go-build-s390x:latest 
 docker tag calico/go-build:latest-s390x calico/go-build:latest
-docker tag calico/go-build:latest-s390x calico/go-build:v${GOBUILD_VERSION}
+docker tag calico/go-build:latest-s390x calico/go-build:v0.31
+docker tag calico/go-build:latest-s390x calico/go-build:v0.34
+docker tag calico/go-build:latest-s390x calico/go-build:v0.33
 
-### 4.2 Build `libcalico-go plugin`
-export LIBCALICOGO_LOG="${LOGDIR}/libcalico_go-$(date +"%F-%T").log"
-touch $LIBCALICOGO_LOG
-printf -- "\nBuilding libcalico-go plugin . . . \n"  | tee -a "$LIBCALICOGO_LOG"
-## Download the source code
-rm -rf $GOPATH/src/github.com/projectcalico/libcalico-go
-git clone https://github.com/projectcalico/libcalico-go $GOPATH/src/github.com/projectcalico/libcalico-go 2>&1 | tee -a "$LIBCALICOGO_LOG"
-cd $GOPATH/src/github.com/projectcalico/libcalico-go 
-git checkout v3.10.0-0.dev 2>&1 | tee -a "$LIBCALICOGO_LOG"
 
-# Modify `Makefile`, patching Makefile
-printf -- "\nDownloading patch for Makefile . . . \n"  | tee -a "$LIBCALICOGO_LOG"
-curl  -o "Makefile_libcalicogo.diff" $PATCH_URL/Makefile_libcalicogo.diff 2>&1 | tee -a "$LIBCALICOGO_LOG"
-printf -- "\nApplying patch to Makefile . . . \n"  | tee -a "$LIBCALICOGO_LOG"
-patch Makefile Makefile_libcalicogo.diff 2>&1 | tee -a "$LIBCALICOGO_LOG"
-rm -rf Makefile_libcalicogo.diff
-
-## Build the `libcalico-go`
-ARCH=s390x make all || true 2>&1 | tee -a "$LIBCALICOGO_LOG"
-
-### 4.3 Build `confd`
-export CONFD_LOG="${LOGDIR}/confd-$(date +"%F-%T").log"
-touch $CONFD_LOG
-printf -- "\nBuilding confd . . . \n"  | tee -a "$CONFD_LOG"
-## Download the source code
-sudo rm -rf $GOPATH/src/github.com/projectcalico/confd
-git clone https://github.com/projectcalico/confd.git $GOPATH/src/github.com/projectcalico/confd 2>&1 | tee -a "$CONFD_LOG"
-cd $GOPATH/src/github.com/projectcalico/confd 
-git checkout v3.10.0-0.dev 2>&1 | tee -a "$CONFD_LOG"
-
-## Build the `confd`
-sudo ARCH=s390x make build 2>&1 | tee -a "$CONFD_LOG"
+docker pull calico/bird:v0.3.3-151-g767b5389-s390x
+docker tag calico/bird:v0.3.3-151-g767b5389-s390x calico/bird:latest
+docker tag calico/bird:v0.3.3-151-g767b5389-s390x  calico/bird:v0.3.3-s390x
 
 
 ### 4.4 Build `calicoctl` binary and `calico/ctl` image
@@ -338,30 +326,6 @@ else
     echo "calico/ctl Build FAILED, Stopping further build !!! Check logs at $CALICOCTL_LOG" | tee -a "$CALICOCTL_LOG"
 	exit 1
 fi
-
-
-### 4.5 Build `bird`
-export BIRD_LOG="${LOGDIR}/bird-$(date +"%F-%T").log"
-touch $BIRD_LOG
-printf -- "\nBuilding bird . . . \n"  | tee -a "$BIRD_LOG"
-## Download the source code
-sudo rm -rf $GOPATH/src/github.com/projectcalico/bird
-git clone https://github.com/projectcalico/bird $GOPATH/src/github.com/projectcalico/bird 2>&1 | tee -a "$BIRD_LOG"
-cd $GOPATH/src/github.com/projectcalico/bird 
-git checkout v${BIRD_VERSION} 2>&1 | tee -a "$BIRD_LOG"
-
-## Run `build.sh` to build 3 executable files (in `dist/s390x/`)
-ARCH=s390x ./build.sh 2>&1 | tee -a "$BIRD_LOG"
-if [[ "$(docker images -q birdbuild-s390x:latest 2> /dev/null)" == "" ]]; then
-  echo "Bird build FAILED, Stopping further build !!! Check logs at $BIRD_LOG" | tee -a "$BIRD_LOG"
-  exit 1
-else
-  echo "Successfully built bird module." | tee -a "$BIRD_LOG"
-fi
-## Tag calico/bird image
-docker tag birdbuild-s390x:latest calico/bird:v${BIRD_VERSION}-s390x
-docker tag birdbuild-s390x:latest calico/bird:latest
-
                    
 ### 4.4 Build `Typha`
 export TYPHA_LOG="${LOGDIR}/typha-$(date +"%F-%T").log"
@@ -383,6 +347,7 @@ rm -rf Makefile-typha.diff
 ## Build the binaries and docker image for typha
 cd $GOPATH/src/github.com/projectcalico/typha
 sudo ARCH=s390x make image 2>&1 | tee -a "$TYPHA_LOG"
+docker tag calico/typha:latest-s390x calico/typha:master-s390x
 
 if grep -Fxq "Successfully tagged calico/typha:latest-s390x" $TYPHA_LOG
 then
@@ -420,6 +385,39 @@ fi
 
 docker tag calico/protoc-s390x:latest calico/protoc:latest-s390x
 docker tag calico/protoc-s390x:latest calico/protoc:v0.1-s390x
+
+
+### 4.5 Build `bpftool`
+## To build `felix`, it  needs bpftool as a base image
+export BPFTOOL_LOG="${LOGDIR}/bpftool-$(date +"%F-%T").log"
+touch $BPFTOOL_LOG
+printf -- "\nBuilding bpftool . . . \n"  | tee -a "$BPFTOOL_LOG"
+rm -rf $GOPATH/src/github.com/projectcalico/bpftool
+git clone https://github.com/projectcalico/bpftool $GOPATH/src/github.com/projectcalico/bpftool 2>&1 | tee -a "$BPFTOOL_LOG"
+cd $GOPATH/src/github.com/projectcalico/bpftool
+git checkout d60ea59f70b85777ea859f08135569cdd09ce784 2>&1 | tee -a "$BPFTOOL_LOG"
+
+## Modify `Makefile`, patching the same
+printf -- "\nDownloading patch for bpftool Makefile . . . \n"  | tee -a "$BPFTOOL_LOG"
+curl  -o "Makefile_bpftool.diff" $PATCH_URL/Makefile_bpftool.diff 2>&1 | tee -a "$BPFTOOL_LOG"
+printf -- "\nApplying patch to Makefile . . . \n"  | tee -a "$BPFTOOL_LOG"
+patch Makefile Makefile_bpftool.diff 2>&1 | tee -a "$BPFTOOL_LOG"
+rm -rf Makefile_bpftool.diff
+
+# Create Dockerfile.s390x file
+printf -- "\nDownloading  Dockerfile.s390x file . . . \n"  | tee -a "$BPFTOOL_LOG"
+curl  -o "Dockerfile.s390x" $PATCH_URL/Dockerfile.s390x_bpftool 2>&1 | tee -a "$BPFTOOL_LOG"
+
+## Build `bpftool`
+ARCH=s390x make image 2>&1 | tee -a "$BPFTOOL_LOG"
+
+if grep -Fxq "Successfully tagged calico/protoc-s390x:latest" $PROTO_LOG
+then
+    echo "Successfully built calico/protoc-s390x" | tee -a "$PROTO_LOG"
+else
+    echo "calico/protoc Build FAILED, Stopping further build !!! Check logs at $PROTO_LOG" | tee -a "$PROTO_LOG"
+	exit 1
+fi
 
 ### Build `felix`
 export FELIX_LOG="${LOGDIR}/felix-$(date +"%F-%T").log"
