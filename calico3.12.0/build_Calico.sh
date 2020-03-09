@@ -273,6 +273,7 @@ printf -- "\nBuilding go-build v0.34 . . . \n"  | tee -a "$GOBUILD_LOG"
 ### 4.1 Build `go-build`
 ##This builds a docker image calico/go-build that is used to build other components
 ##v0.34 for other calico components being felix, calicoctl, node etc.
+cd $GOPATH
 rm -rf $GOPATH/src/github.com/projectcalico/go-build
 git clone https://github.com/projectcalico/go-build $GOPATH/src/github.com/projectcalico/go-build 2>&1 | tee -a "$GOBUILD_LOG"
 cd $GOPATH/src/github.com/projectcalico/go-build
