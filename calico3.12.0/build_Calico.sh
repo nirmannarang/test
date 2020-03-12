@@ -312,13 +312,13 @@ export CALICOCTL_LOG="${LOGDIR}/calicoctl-$(date +"%F-%T").log"
 touch $CALICOCTL_LOG
 printf -- "\nBuilding calicoctl . . . \n"  | tee -a "$CALICOCTL_LOG"
 ## Download the source code
-sudo rm -rf $GOPATH/src/github.com/projectcalico/calicoctl
+rm -rf $GOPATH/src/github.com/projectcalico/calicoctl
 git clone https://github.com/projectcalico/calicoctl $GOPATH/src/github.com/projectcalico/calicoctl 2>&1 | tee -a "$CALICOCTL_LOG"
 cd $GOPATH/src/github.com/projectcalico/calicoctl 
 git checkout v${CALICO_VERSION} 2>&1 | tee -a "$CALICOCTL_LOG"
 
 ## Build the `calicoctl` binary and `calico/ctl` image
-sudo ARCH=s390x make image 2>&1 | tee -a "$CALICOCTL_LOG"
+ARCH=s390x make image 2>&1 | tee -a "$CALICOCTL_LOG"
 
 if grep -Fxq "Successfully tagged calico/ctl:latest-s390x" $CALICOCTL_LOG
 then
@@ -333,7 +333,7 @@ export TYPHA_LOG="${LOGDIR}/typha-$(date +"%F-%T").log"
 touch $TYPHA_LOG
 printf -- "\nBuilding typha . . . \n"  | tee -a "$TYPHA_LOG"
 ## Download the source code
-sudo rm -rf $GOPATH/src/github.com/projectcalico/typha
+rm -rf $GOPATH/src/github.com/projectcalico/typha
 git clone https://github.com/projectcalico/typha $GOPATH/src/github.com/projectcalico/typha 2>&1 | tee -a "$TYPHA_LOG"
 cd $GOPATH/src/github.com/projectcalico/typha 
 git checkout v${CALICO_VERSION} 2>&1 | tee -a "$TYPHA_LOG"
@@ -347,7 +347,7 @@ rm -rf Makefile-typha.diff
 
 ## Build the binaries and docker image for typha
 cd $GOPATH/src/github.com/projectcalico/typha
-sudo ARCH=s390x make image 2>&1 | tee -a "$TYPHA_LOG"
+ARCH=s390x make image 2>&1 | tee -a "$TYPHA_LOG"
 docker tag calico/typha:latest-s390x calico/typha:master-s390x
 
 if grep -Fxq "Successfully tagged calico/typha:latest-s390x" $TYPHA_LOG
