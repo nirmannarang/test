@@ -1,0 +1,1428 @@
+"Build dependency versions"
+BIRD_VERSION          = v0.3.3-151-g767b5389
+"Test dependency versions"
+CNI_VER               = latest    
+"Calico git version"
+GIT_VERSION           = v3.12.0-dirty
+mkdir -p .go-pkg-cache bin /home/nirman/go/pkg/mod && docker run --rm --net=host -e GO111MODULE=on -v /home/nirman/go/pkg/mod:/go/pkg/mod:rw -e LOCAL_USER_ID=1001 -e GOCACHE=/go-cache -e GOARCH=s390x -e GOPATH=/go -e OS=linux -e GOOS=linux -e GOFLAGS= -v /home/nirman/go/src/github.com/projectcalico/node:/go/src/github.com/projectcalico/node:rw -v /home/nirman/go/src/github.com/projectcalico/node/.go-pkg-cache:/go-cache:rw -w /go/src/github.com/projectcalico/node calico/go-build:v0.34 sh -c ' go mod download'
+Starting with UID : 1001
+mkdir -p filesystem/etc/calico/confd
+mkdir -p .go-pkg-cache bin /home/nirman/go/pkg/mod && docker run --rm --net=host -e GO111MODULE=on -v /home/nirman/go/pkg/mod:/go/pkg/mod:rw -e LOCAL_USER_ID=1001 -e GOCACHE=/go-cache -e GOARCH=s390x -e GOPATH=/go -e OS=linux -e GOOS=linux -e GOFLAGS= -v /home/nirman/go/src/github.com/projectcalico/node:/go/src/github.com/projectcalico/node:rw -v /home/nirman/go/src/github.com/projectcalico/node/.go-pkg-cache:/go-cache:rw -w /go/src/github.com/projectcalico/node calico/go-build:v0.34 sh -c ' \
+	cp -r `go list -m -f "{{.Dir}}" github.com/kelseyhightower/confd`/etc/calico/confd/conf.d filesystem/etc/calico/confd/conf.d; \
+	cp -r `go list -m -f "{{.Dir}}" github.com/kelseyhightower/confd`/etc/calico/confd/config filesystem/etc/calico/confd/config; \
+	cp -r `go list -m -f "{{.Dir}}" github.com/kelseyhightower/confd`/etc/calico/confd/templates filesystem/etc/calico/confd/templates; \
+	cp `go list -m -f "{{.Dir}}" github.com/projectcalico/libcalico-go`/test/crds.yaml crds.yaml; \
+	chmod -R +w filesystem/etc/calico/confd/ crds.yaml'
+Starting with UID : 1001
+# Check versions of the binaries that we're going to use to build the image.
+# Since the binaries are built for Linux, run them in a container to allow the
+# make target to be run on different platforms (e.g. MacOS).
+docker run --rm -v /home/nirman/go/src/github.com/projectcalico/node/dist/bin:/go/bin:rw calico/go-build:v0.34 /bin/sh -c "\
+  echo; echo calico-node-s390x -v;	 /go/bin/calico-node-s390x -v; \
+"
+Starting with UID : 9001
+
+calico-node-s390x -v
+v3.12.0-dirty
+docker build -t calico/node:latest-s390x . --build-arg BIRD_IMAGE=calico/bird:v0.3.3-151-g767b5389-s390x --build-arg QEMU_IMAGE=calico/go-build:v0.34 --build-arg GIT_VERSION=v3.12.0-dirty -f ./Dockerfile.s390x
+Sending build context to Docker daemon  127.8MB
+Step 1/17 : ARG QEMU_IMAGE=calico/go-build:latest
+Step 2/17 : ARG BIRD_IMAGE=calico/bird:latest
+Step 3/17 : FROM ${QEMU_IMAGE} as qemu
+ ---> 63c9349eb8af
+Step 4/17 : FROM ${BIRD_IMAGE} as bird
+ ---> ea8fa93231f2
+Step 5/17 : FROM calico/bpftool:v5.3-s390x as bpftool
+ ---> 9dabfa0cdf4b
+Step 6/17 : FROM s390x/alpine:3.8
+ ---> 39958229a17f
+Step 7/17 : MAINTAINER LoZ Open Source Ecosystem (https://www.ibm.com/developerworks/community/groups/community/lozopensource)
+ ---> Using cache
+ ---> 756bcb8eacd9
+Step 8/17 : ARG ARCH=s390x
+ ---> Using cache
+ ---> 68c461f378b5
+Step 9/17 : ENV DOCKER_API_VERSION 1.21
+ ---> Using cache
+ ---> 9a9ded10a500
+Step 10/17 : COPY --from=qemu /usr/bin/qemu-${ARCH}-static /usr/bin/
+ ---> Using cache
+ ---> cd1a21e336a0
+Step 11/17 : RUN apk add --no-cache ip6tables ipset iputils iproute2 conntrack-tools runit file ca-certificates
+ ---> Using cache
+ ---> 1d1f9ed34f6e
+Step 12/17 : COPY --from=bird /bird* /bin/
+ ---> Using cache
+ ---> 699654cc77a4
+Step 13/17 : COPY filesystem/ /
+ ---> Using cache
+ ---> 2a9763f7eb32
+Step 14/17 : COPY dist/bin/calico-node-${ARCH} /bin/calico-node
+ ---> Using cache
+ ---> ea9fa28f27f5
+Step 15/17 : COPY --from=bpftool /bpftool /bin
+ ---> Using cache
+ ---> 157af7f5b370
+Step 16/17 : RUN rm /usr/bin/qemu-${ARCH}-static
+ ---> Using cache
+ ---> 7871678ed9b9
+Step 17/17 : CMD ["start_runit"]
+ ---> Using cache
+ ---> 32d7cbba17c0
+[Warning] One or more build-args [GIT_VERSION] were not consumed
+Successfully built 32d7cbba17c0
+Successfully tagged calico/node:latest-s390x
+touch .calico_node.created-s390x
+# Check versions of the Calico binaries that will be in calico-node.tar.
+# Since the binaries are built for Linux, run them in a container to allow the
+# make target to be run on different platforms (e.g. MacOS).
+docker run --rm calico/node:latest-s390x /bin/sh -c "\
+  echo bird --version;	 /bin/bird --version; \
+"
+bird --version
+BIRD version v0.3.3+birdv1.6.8
+docker save --output calico-node.tar calico/node:latest-s390x
+Error: No such container: calico-etcd
+Makefile:172: recipe for target 'run-etcd' failed
+make: [run-etcd] Error 1 (ignored)
+docker run --detach \
+--net=host \
+--name calico-etcd quay.io/coreos/etcd:v3.3.7-s390x \
+etcd \
+--advertise-client-urls "http://9.30.214.207:2379,http://127.0.0.1:2379" \
+--listen-client-urls "http://0.0.0.0:2379"
+a02cd24de209b3e33fb896c22f5626d64bab8074c55c01452391d218c0ef67df
+# Check versions of Calico binaries that ST execution will use.
+docker run --rm -v /home/nirman/go/src/github.com/projectcalico/node/dist:/go/bin:rw calico/go-build:v0.34 /bin/sh -c "\
+  echo; echo calicoctl version;	  /go/bin/calicoctl version; \
+  echo; echo calico-cni-plugin -v;       /go/bin/calico-cni-plugin -v; \
+  echo; echo calico-ipam-plugin -v;      /go/bin/calico-ipam-plugin -v; echo; \
+"
+Starting with UID : 9001
+
+calicoctl version
+Client Version:    v3.12.0
+Git commit:        84a21b3b
+no etcd endpoints specified
+
+calico-cni-plugin -v
+v3.12.0
+
+calico-ipam-plugin -v
+v3.12.0
+
+# Use the host, PID and network namespaces from the host.
+# Privileged is needed since 'calico node' write to /proc (to enable ip_forwarding)
+# Map the docker socket in so docker can be used from inside the container
+# HOST_CHECKOUT_DIR is used for volume mounts on containers started by this one.
+# All of code under test is mounted into the container.
+#   - This also provides access to calicoctl and the docker client
+# make st-checks
+docker run --uts=host \
+	   --pid=host \
+	   --net=host \
+	   --privileged \
+	   -v /home/nirman/go/src/github.com/projectcalico/node:/code \
+	   -e HOST_CHECKOUT_DIR=/home/nirman/go/src/github.com/projectcalico/node \
+	   -e DEBUG_FAILURES= \
+	   -e MY_IP=9.30.214.207 \
+	   -e NODE_CONTAINER_NAME=calico/node:latest-s390x \
+	   --rm -t \
+	   -v /var/run/docker.sock:/var/run/docker.sock \
+	   calico/test:latest-s390x \
+	   sh -c 'nosetests tests/st/ -v --with-xunit --xunit-file="/code/report/nosetests.xml" --with-timer '
+/usr/lib/python2.7/site-packages/nose_parameterized/__init__.py:7: UserWarning: The 'nose-parameterized' package has been renamed 'parameterized'. For the two step migration instructions, see: https://github.com/wolever/parameterized#migrating-from-nose-parameterized-to-parameterized (set NOSE_PARAMETERIZED_NO_WARN=1 to suppress this warning)
+  "The 'nose-parameterized' package has been renamed 'parameterized'. "
+Test using different BGP backends. ... SKIP: Disabled until gobgp is updated with libcalico-go v3
+Test readiness when BGP connections are severed. ... ok ([31m51.8258s[0m)
+A simple base case to check if calico/node becomes live. ... ok ([31m16.4213s[0m)
+Simulate confd service to be down for bird6 ... ok ([31m18.9813s[0m)
+Simulate bird6 service to be down. ... ok ([31m19.1300s[0m)
+Simulate confd service to be down for bird ... ok ([31m17.9099s[0m)
+Simulate bird service to be down. ... ok ([31m18.2645s[0m)
+A simple base case to check if calico/node becomes live. Uses environment variable as port number. ... ok ([31m16.1001s[0m)
+A simple base case to check if calico/node becomes live. ... ok ([31m29.5995s[0m)
+Simulate a broken felix by turning off Felix's health endpoint. ... ok ([31m14.4617s[0m)
+Check that we're still reporting broken felix even when calico networking (bird) is off. ... ok ([31m13.9191s[0m)
+A simple base case to check if calico/node becomes ready. ... ok ([31m17.0821s[0m)
+A simple base case to check if calico/node becomes ready. Uses environment variable as port number. ... ok ([31m17.1473s[0m)
+A simple base case to check if calico/node becomes ready. ... ok ([31m32.0301s[0m)
+test_bird_as_num (tests.st.bgp.test_global_config.TestBGP) ... ok ([31m40.6926s[0m)
+Test default BGP configuration commands. ... ok ([32m0.7738s[0m)
+test_gobgp_as_num (tests.st.bgp.test_global_config.TestBGP) ... SKIP: Disabled until gobgp is updated with libcalico-go v3
+test_bird_node_peers (tests.st.bgp.test_global_peers.TestGlobalPeers) ... ok ([31m45.5876s[0m)
+test_gobgp_node_peers (tests.st.bgp.test_global_peers.TestGlobalPeers) ... SKIP: Disabled until gobgp is updated with libcalico-go v3
+test_bird_internal_route_reflector (tests.st.bgp.test_internal_route_reflector.TestInternalRouteReflector) ... ok ([31m75.2695s[0m)
+test_bird_internal_route_reflector_default_as (tests.st.bgp.test_internal_route_reflector.TestInternalRouteReflector) ... ok ([31m82.1703s[0m)
+test_gobgp_internal_route_reflector (tests.st.bgp.test_internal_route_reflector.TestInternalRouteReflector) ... SKIP: Disabled until gobgp is updated with libcalico-go v3
+Test with and without IP-in-IP routing on simulated GCE instances [with with_ipip=False, backend='bird']. ... ok ([31m98.5385s[0m)
+Test with and without IP-in-IP routing on simulated GCE instances [with with_ipip=True, backend='bird']. ... ok ([31m95.1001s[0m)
+As test_gce except with a route reflector instead of mesh config [with with_ipip=False]. ... ok ([31m117.7397s[0m)
+As test_gce except with a route reflector instead of mesh config [with with_ipip=True]. ... ok ([31m114.4587s[0m)
+Test IPIP routing with the different IPIP modes [with backend='bird']. ... ok ([31m71.6866s[0m)
+test_ipip_addr_assigned (tests.st.bgp.test_ipip.TestIPIP) ... head: /var/log/calico/felix/current: No such file or directory
+head: /var/log/calico/felix/current: No such file or directory
+cat: can't open '/var/log/calico/felix/current': No such file or directory
+ok ([31m22.1990s[0m)
+Test cold start of bgp daemon correctly fixes tunl/non-tunl routes [with backend='bird']. ... ok ([31m101.5662s[0m)
+test_bird_node_peers (tests.st.bgp.test_node_peers.TestNodePeers) ... ok ([31m45.7741s[0m)
+test_gobgp_node_peers (tests.st.bgp.test_node_peers.TestNodePeers) ... SKIP: Disabled until gobgp is updated with libcalico-go v3
+Test that newly restarted BGP backend processes consistently [with test_host=2, pid_name='bird'] ... SKIP: Disabled until gobgp is updated with libcalico-go v3
+Test that newly restarted BGP backend processes consistently [with test_host=0, pid_name='calico-bgp-daemon'] ... SKIP: Disabled until gobgp is updated with libcalico-go v3
+test_bird_route_reflector_cluster (tests.st.bgp.test_route_reflector_cluster.TestRouteReflectorCluster) ... ok ([31m142.4846s[0m)
+test_gobgp_route_reflector_cluster (tests.st.bgp.test_route_reflector_cluster.TestRouteReflectorCluster) ... SKIP: Disabled until gobgp is updated with libcalico-go v3
+Runs a cluster of route reflectors, brings one node down, and ensures that traffic still flows ... ok ([31m92.8469s[0m)
+test_bird_single_route_reflector (tests.st.bgp.test_single_route_reflector.TestSingleRouteReflector) ... ok ([31m72.1682s[0m)
+test_bird_single_route_reflector_default_as (tests.st.bgp.test_single_route_reflector.TestSingleRouteReflector) ... ok ([31m73.0285s[0m)
+test_gobgp_single_route_reflector (tests.st.bgp.test_single_route_reflector.TestSingleRouteReflector) ... SKIP: Disabled until gobgp is updated with libcalico-go v3
+Test updating the IP address automatically updates and fixes the ... ok ([31m44.3788s[0m)
+Test using different IP autodetection methods. ... ok ([31m93.1294s[0m)
+Test that the various options for default pools work correctly [with success_expected=False, param='CALICO_IPV4POOL_CIDR', value='10.0.0.0/27', exp_num_pools=0, ipip=None, nat_outgoing=True, description='Too small'] ... ok ([33m2.9186s[0m)
+Test that the various options for default pools work correctly [with success_expected=False, param='CALICO_IPV4POOL_CIDR', value='10.0.0.0/32', exp_num_pools=0, ipip=None, nat_outgoing=True, description='Too small, but legal CIDR'] ... ok ([31m5.3319s[0m)
+Test that the various options for default pools work correctly [with success_expected=True, param='CALICO_IPV4POOL_CIDR', value='10.0.0.0/24', exp_num_pools=2, ipip='CrossSubnet', nat_outgoing=True, description='Typ. non-def pool, IPIP'] ... ok ([31m6.5270s[0m)
+Test that the various options for default pools work correctly [with success_expected=True, param='CALICO_IPV4POOL_CIDR', value='10.0.0.0/24', exp_num_pools=2, ipip='Always', nat_outgoing=True, description='Typ. non-default pool, IPIP'] ... ok ([31m6.5096s[0m)
+Test that the various options for default pools work correctly [with success_expected=True, param='CALICO_IPV4POOL_CIDR', value='10.0.0.0/24', exp_num_pools=2, ipip='Never', nat_outgoing=True, description='Typical pool, explicitly no IPIP'] ... ok ([31m6.0454s[0m)
+Test that the various options for default pools work correctly [with success_expected=True, param='CALICO_IPV6POOL_CIDR', value='fd00::/122', exp_num_pools=2, ipip='Always', nat_outgoing=False, description='IPv6 - IPIP not permitted'] ... ok ([31m6.5779s[0m)
+Test that the various options for default pools work correctly [with success_expected=True, param='CALICO_IPV6POOL_CIDR', value='fd00::/122', exp_num_pools=2, ipip='CrossSubnet', nat_outgoing=False, description='IPv6 - IPIP not allowed'] ... ok ([31m6.4627s[0m)
+Test that the various options for default pools work correctly [with success_expected=True, param='CALICO_IPV6POOL_CIDR', value='fd00::/122', exp_num_pools=2, ipip='Never', nat_outgoing=False, description='IPv6, IPIP explicitly off'] ... ok ([31m6.5024s[0m)
+Test that the various options for default pools work correctly [with success_expected=False, param='CALICO_IPV6POOL_CIDR', value='fd00::/122', exp_num_pools=0, ipip='junk', nat_outgoing=False, description='Invalid IPIP value'] ... ok ([31m6.5441s[0m)
+Test that the various options for default pools work correctly [with success_expected=False, param='CALICO_IPV4POOL_CIDR', value='10.0.0.0/24', exp_num_pools=0, ipip='reboot', nat_outgoing=True, description='Invalid IPIP value'] ... ok ([31m4.9962s[0m)
+Test that the various options for default pools work correctly [with success_expected=False, param='CALICO_IPV4POOL_CIDR', value='0.0.0.0/0', exp_num_pools=0, ipip=None, nat_outgoing=True, description='Invalid, link local address'] ... ok ([31m6.0410s[0m)
+Test that the various options for default pools work correctly [with success_expected=False, param='CALICO_IPV6POOL_CIDR', value='::/0', exp_num_pools=0, ipip=None, nat_outgoing=False, description='Invalid, link local address'] ... ok ([31m4.8763s[0m)
+Test that the various options for default pools work correctly [with success_expected=False, param='CALICO_IPV4POOL_CIDR', value='10.0.0.0/33', exp_num_pools=0, ipip=None, nat_outgoing=True, description='Impossible CIDR'] ... ok ([31m6.2000s[0m)
+Test that the various options for default pools work correctly [with success_expected=True, param='CALICO_IPV6POOL_CIDR', value='fd80::0:0/120', exp_num_pools=2, ipip=None, nat_outgoing=False, description='Valid, but non-canonical form'] ... ok ([31m6.1752s[0m)
+Test that the various options for default pools work correctly [with success_expected=False, param='CALICO_IPV6POOL_CIDR', value='1.2.3.4/24', exp_num_pools=0, ipip=None, nat_outgoing=False, description='Wrong type'] ... ok ([31m4.9528s[0m)
+Test that the various options for default pools work correctly [with success_expected=False, param='CALICO_IPV4POOL_CIDR', value='fd00::/24', exp_num_pools=0, ipip=None, nat_outgoing=True, description='Wrong type'] ... ok ([31m6.2977s[0m)
+Test that the various options for default pools work correctly [with success_expected=True, param='CALICO_IPV6POOL_CIDR', value='::0:a:b:c:d:e:0/120', exp_num_pools=2, ipip=None, nat_outgoing=False, description='Valid, non-canonical form'] ... ok ([31m6.5273s[0m)
+Test that the various options for default pools work correctly [with success_expected=False, param='CALICO_IPV4POOL_CIDR', value='1.2/16', exp_num_pools=0, ipip=None, nat_outgoing=True, description='Valid, unusual form'] ... ok ([31m6.6359s[0m)
+Test that the various options for default pools work correctly [with success_expected=False, param='CALICO_IPV4POOL_CIDR', value='256.0.0.0/24', exp_num_pools=0, ipip=None, nat_outgoing=True, description='Invalid IP'] ... ok ([31m6.9395s[0m)
+Test that the various options for default pools work correctly [with success_expected=True, param='CALICO_IPV4POOL_CIDR', value='10.0.0.0/24', exp_num_pools=2, ipip=None, nat_outgoing=True, description='Typical non-default pool'] ... ok ([31m6.4324s[0m)
+Test that the various options for default pools work correctly [with success_expected=True, param='CALICO_IPV4POOL_CIDR', value='10.0.0.0/26', exp_num_pools=2, ipip=None, nat_outgoing=True, description='Smallest legal pool'] ... ok ([31m6.4723s[0m)
+Test that the various options for default pools work correctly [with success_expected=True, param='CALICO_IPV6POOL_CIDR', value='fd00::/122', exp_num_pools=2, ipip=None, nat_outgoing=False, description='Smallest legal pool'] ... ok ([31m6.2800s[0m)
+Test that the various options for default pools work correctly [with success_expected=False, param='CALICO_IPV6POOL_CIDR', value='fd00::/123', exp_num_pools=0, ipip=None, nat_outgoing=False, description='Too small'] ... ok ([31m5.0805s[0m)
+Test that the various options for default pools work correctly [with success_expected=False, param='CALICO_IPV6POOL_CIDR', value='fd00::/128', exp_num_pools=0, ipip=None, nat_outgoing=False, description='Too small, but legal CIDR'] ... ok ([31m6.7050s[0m)
+Test that the various options for default pools work correctly [with success_expected=False, param='CALICO_IPV6POOL_CIDR', value='fd00::/129', exp_num_pools=0, ipip=None, nat_outgoing=False, description='Impossible CIDR'] ... ok ([31m4.9879s[0m)
+Test that NO_DEFAULT_POOLS works correctly ... head: /var/log/calico/felix/current: No such file or directory
+ok ([31m4.8102s[0m)
+head: /var/log/calico/felix/current: No such file or directory
+cat: can't open '/var/log/calico/felix/current': No such file or directory
+Test that the diags command successfully creates a tar.gz file. ... ok ([31m5.1625s[0m)
+Test that dryrun does not output ETCD_AUTHORITY or ETCD_SCHEME. ... ok ([32m0.5314s[0m)
+Test that the status command can be executed. ... head: /var/log/calico/felix/current: No such file or directory
+head: /var/log/calico/felix/current: No such file or directory
+cat: can't open '/var/log/calico/felix/current': No such file or directory
+ok ([31m4.8777s[0m)
+Test that the status command fails when calico node is not running ... ok ([32m0.5103s[0m)
+Create some workloads, then ask calicoctl to tell you about the IPs in the pool. ... ok ([31m52.6251s[0m)
+Repeatedly create and delete workloads until the system re-assigns an IP [with make_static_workload=False]. ... ERROR
+Repeatedly create and delete workloads until the system re-assigns an IP [with make_static_workload=True]. ... ok ([31m164.2904s[0m)
+(Add a pool), create containers, check IPs assigned from pool. ... ok ([31m26.7545s[0m)
+Test if traffic is allowed with no policy setup. ... ok ([31m7.2496s[0m)
+Test default deny for local traffic after host endpoint been created. ... ok ([31m13.2296s[0m)
+Test empty policy deny local and forward traffic. ... ok ([31m17.3885s[0m)
+Test combinations of untracked, preDNAT, normal and forward policies. ... ok ([31m41.6033s[0m)
+Test local allow does not affect forward traffic with empty policy. ... ok ([31m28.2720s[0m)
+Test local deny with lower order does not affect forward allow policy. ... ok ([31m26.9983s[0m)
+Test local egress allow does not affect forward egress deny with lower order. ... ok ([31m23.8868s[0m)
+Test local and forward got opposite allow/deny rules. ... ok ([31m20.2739s[0m)
+Test local and forward got opposite allow/deny rules. ... ok ([31m19.6310s[0m)
+Test local ingress allow does not affect forward ingress deny with lower order. ... ok ([31m24.2255s[0m)
+Test deny network policy for namespace default with two orders mixed with global network policy. ... ok ([31m44.1919s[0m)
+Test deny network policy for namespace nsb with two orders mixed with global network policy. ... ok ([31m47.1275s[0m)
+Test all workload can be accessed without policy. ... ok ([31m9.4486s[0m)
+Test deny network policy for namespace default with two orders mixed with global network policy. ... ok ([31m22.4669s[0m)
+Test network policy for namespace nsa. ... ok ([31m18.0081s[0m)
+Test deny network policy for namespace nsa with two orders mixed with global network policy. ... ok ([31m19.6201s[0m)
+Test global network policy with different order. ... ok ([31m37.8469s[0m)
+Test mixed deny network policy for namespaces mixed with global network policy. ... ok ([31m32.1104s[0m)
+test_rules_dest_ip_nets (tests.st.policy.test_profile.MultiHostMainline) ... ok ([31m76.4981s[0m)
+test_rules_ip_addr (tests.st.policy.test_profile.MultiHostMainline) ... ok ([31m73.2353s[0m)
+test_rules_ip_net (tests.st.policy.test_profile.MultiHostMainline) ... ok ([31m74.5163s[0m)
+test_rules_protocol_icmp (tests.st.policy.test_profile.MultiHostMainline) ... ok ([31m70.5255s[0m)
+test_rules_selector (tests.st.policy.test_profile.MultiHostMainline) ... ok ([31m83.8294s[0m)
+test_rules_source_ip_nets (tests.st.policy.test_profile.MultiHostMainline) ... ok ([31m87.1615s[0m)
+test_rules_source_ip_nets_2 (tests.st.policy.test_profile.MultiHostMainline) ... ok ([31m95.2125s[0m)
+Test global network sets end-to-end ... ok ([31m111.1011s[0m)
+test_rules_tcp_port (tests.st.policy.test_profile.MultiHostMainline) ... ok ([31m95.8577s[0m)
+test_rules_udp_port (tests.st.policy.test_profile.MultiHostMainline) ... ok ([31m95.1375s[0m)
+test_tags (tests.st.policy.test_profile.MultiHostMainline) ... ok ([31m101.9933s[0m)
+
+======================================================================
+ERROR: Repeatedly create and delete workloads until the system re-assigns an IP [with make_static_workload=False].
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/nose_parameterized/parameterized.py", line 392, in standalone_func
+    return func(*(a + p.args), **p.kwargs)
+  File "/code/tests/st/ipam/test_ipam.py", line 214, in test_pool_wrap
+    self.delete_workload(host, new_workload)
+  File "/code/tests/st/ipam/test_ipam.py", line 238, in delete_workload
+    host.calicoctl("ipam release --ip=%s" % workload.ip)
+  File "/code/tests/st/utils/docker_host.py", line 306, in calicoctl
+    return self.execute(calicoctl + " " + command, raise_exception_on_failure=raise_exception_on_failure)
+  File "/code/tests/st/utils/docker_host.py", line 223, in execute
+    return log_and_run(command, raise_exception_on_failure=raise_exception_on_failure)
+  File "/code/tests/st/utils/utils.py", line 118, in log_and_run
+    raise CommandExecError(e)
+CommandExecError: Command docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.109' failed with RC 126 and output:
+OCI runtime exec failed: exec failed: container_linux.go:348: starting container process caused "process_linux.go:90: adding pid 10937 to cgroups caused \"failed to write 10937 to cgroup.procs: write /sys/fs/cgroup/cpu,cpuacct/docker/5309dcc5485b492231c4c1c10b163e295fcccd134e771eefb1e0620d4c5df5ff/cgroup.procs: invalid argument\"": unknown
+
+-------------------- >> begin captured logging << --------------------
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:33.480271] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl get IPpool -o yaml'
+tests.st.utils.utils: INFO:   # apiVersion: projectcalico.org/v3
+tests.st.utils.utils: INFO:   # items:
+tests.st.utils.utils: INFO:   # - apiVersion: projectcalico.org/v3
+tests.st.utils.utils: INFO:   #   kind: IPPool
+tests.st.utils.utils: INFO:   #   metadata:
+tests.st.utils.utils: INFO:   #     creationTimestamp: "2020-03-13T11:58:20Z"
+tests.st.utils.utils: INFO:   #     name: default-ipv4-ippool
+tests.st.utils.utils: INFO:   #     resourceVersion: "1311"
+tests.st.utils.utils: INFO:   #     uid: 971dbf24-58a4-4874-bcfb-26d66eea34a1
+tests.st.utils.utils: INFO:   #   spec:
+tests.st.utils.utils: INFO:   #     blockSize: 26
+tests.st.utils.utils: INFO:   #     cidr: 192.168.128.0/17
+tests.st.utils.utils: INFO:   #     ipipMode: Never
+tests.st.utils.utils: INFO:   #     natOutgoing: true
+tests.st.utils.utils: INFO:   #     nodeSelector: all()
+tests.st.utils.utils: INFO:   #     vxlanMode: Never
+tests.st.utils.utils: INFO:   # - apiVersion: projectcalico.org/v3
+tests.st.utils.utils: INFO:   #   kind: IPPool
+tests.st.utils.utils: INFO:   #   metadata:
+tests.st.utils.utils: INFO:   #     creationTimestamp: "2020-03-13T11:58:20Z"
+tests.st.utils.utils: INFO:   #     name: default-ipv6-ippool
+tests.st.utils.utils: INFO:   #     resourceVersion: "1312"
+tests.st.utils.utils: INFO:   #     uid: f309576c-8d78-49d3-96e7-ef74eb5e03e2
+tests.st.utils.utils: INFO:   #   spec:
+tests.st.utils.utils: INFO:   #     blockSize: 122
+tests.st.utils.utils: INFO:   #     cidr: fdd1:ddca:6d6c::/48
+tests.st.utils.utils: INFO:   #     ipipMode: Never
+tests.st.utils.utils: INFO:   #     nodeSelector: all()
+tests.st.utils.utils: INFO:   #     vxlanMode: Never
+tests.st.utils.utils: INFO:   # kind: IPPoolList
+tests.st.utils.utils: INFO:   # metadata:
+tests.st.utils.utils: INFO:   #   resourceVersion: "1342"
+tests.st.utils.utils: INFO: [2020-03-13 11:58:33.634672] docker cp /tmp/tmpG4GQ9D host1:orig_pools.yaml
+tests.st.utils.utils: INFO:   # 
+tests.st.utils.utils: INFO: [2020-03-13 11:58:34.667361] docker exec -it host1 sh -c 'cat orig_pools.yaml'
+tests.st.utils.utils: INFO:   # apiVersion: projectcalico.org/v3
+tests.st.utils.utils: INFO:   # items:
+tests.st.utils.utils: INFO:   # - apiVersion: projectcalico.org/v3
+tests.st.utils.utils: INFO:   #   kind: IPPool
+tests.st.utils.utils: INFO:   #   metadata:
+tests.st.utils.utils: INFO:   #     creationTimestamp: "2020-03-13T11:58:20Z"
+tests.st.utils.utils: INFO:   #     name: default-ipv4-ippool
+tests.st.utils.utils: INFO:   #     resourceVersion: "1311"
+tests.st.utils.utils: INFO:   #     uid: 971dbf24-58a4-4874-bcfb-26d66eea34a1
+tests.st.utils.utils: INFO:   #   spec:
+tests.st.utils.utils: INFO:   #     blockSize: 26
+tests.st.utils.utils: INFO:   #     cidr: 192.168.128.0/17
+tests.st.utils.utils: INFO:   #     ipipMode: Never
+tests.st.utils.utils: INFO:   #     natOutgoing: true
+tests.st.utils.utils: INFO:   #     nodeSelector: all()
+tests.st.utils.utils: INFO:   #     vxlanMode: Never
+tests.st.utils.utils: INFO:   # - apiVersion: projectcalico.org/v3
+tests.st.utils.utils: INFO:   #   kind: IPPool
+tests.st.utils.utils: INFO:   #   metadata:
+tests.st.utils.utils: INFO:   #     creationTimestamp: "2020-03-13T11:58:20Z"
+tests.st.utils.utils: INFO:   #     name: default-ipv6-ippool
+tests.st.utils.utils: INFO:   #     resourceVersion: "1312"
+tests.st.utils.utils: INFO:   #     uid: f309576c-8d78-49d3-96e7-ef74eb5e03e2
+tests.st.utils.utils: INFO:   #   spec:
+tests.st.utils.utils: INFO:   #     blockSize: 122
+tests.st.utils.utils: INFO:   #     cidr: fdd1:ddca:6d6c::/48
+tests.st.utils.utils: INFO:   #     ipipMode: Never
+tests.st.utils.utils: INFO:   #     nodeSelector: all()
+tests.st.utils.utils: INFO:   #     vxlanMode: Never
+tests.st.utils.utils: INFO:   # kind: IPPoolList
+tests.st.utils.utils: INFO:   # metadata:
+tests.st.utils.utils: INFO:   #   resourceVersion: "1342"
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:34.798506] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl delete -f orig_pools.yaml'
+tests.st.utils.utils: INFO:   # Successfully deleted 2 'IPPool' resource(s)
+tests.st.utils.utils: INFO: [2020-03-13 11:58:36.105571] docker cp /tmp/tmplxm5kr host1:newpool.json
+tests.st.utils.utils: INFO:   # 
+tests.st.utils.utils: INFO: [2020-03-13 11:58:37.067358] docker exec -it host1 sh -c 'cat newpool.json'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #   "apiVersion": "projectcalico.org/v3",
+tests.st.utils.utils: INFO:   #   "kind": "IPPool",
+tests.st.utils.utils: INFO:   #   "metadata": {
+tests.st.utils.utils: INFO:   #     "name": "ippool-name-4"
+tests.st.utils.utils: INFO:   #   },
+tests.st.utils.utils: INFO:   #   "spec": {
+tests.st.utils.utils: INFO:   #     "cidr": "192.168.46.0/25"
+tests.st.utils.utils: INFO:   #   }
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:37.194820] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl create -f newpool.json'
+tests.st.utils.utils: INFO:   # Successfully created 1 'IPPool' resource(s)
+tests.st.utils.utils: INFO: [2020-03-13 11:58:37.344472] docker exec -it host1 sh -c 'docker run -tid --name wldw-0 --net=none  workload'
+tests.st.utils.utils: INFO:   # a96e4b0a47388226ccc4cd2601f8af47f2f7cf3617f9b4fc82d9005ea6ac32d6
+tests.st.utils.utils: INFO: [2020-03-13 11:58:38.126180] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-0'
+tests.st.utils.utils: INFO:   # 5870
+tests.st.utils.utils: INFO: [2020-03-13 11:58:38.325280] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-0'
+tests.st.utils.utils: INFO:   # a96e4b0a47388226ccc4cd2601f8af47f2f7cf3617f9b4fc82d9005ea6ac32d6
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:38.525898] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=a96e4b0a47388226ccc4cd2601f8af47f2f7cf3617f9b4fc82d9005ea6ac32d6 CNI_NETNS=/proc/5870/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.64/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.64/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:38.779232] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.64'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.64
+tests.st.utils.utils: INFO: [2020-03-13 11:58:38.937102] docker exec -it host1 sh -c 'docker rm -f wldw-0'
+tests.st.utils.utils: INFO:   # wldw-0
+tests.st.utils.utils: INFO: [2020-03-13 11:58:39.635634] docker exec -it host1 sh -c 'docker run -tid --name wldw-1 --net=none  workload'
+tests.st.utils.utils: INFO:   # cade8082b93a803996f40a149ecf86f1500065a36f83660b903fb2c000ca64a8
+tests.st.utils.utils: INFO: [2020-03-13 11:58:40.481339] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-1'
+tests.st.utils.utils: INFO:   # 6117
+tests.st.utils.utils: INFO: [2020-03-13 11:58:40.663269] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-1'
+tests.st.utils.utils: INFO:   # cade8082b93a803996f40a149ecf86f1500065a36f83660b903fb2c000ca64a8
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:40.844723] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=cade8082b93a803996f40a149ecf86f1500065a36f83660b903fb2c000ca64a8 CNI_NETNS=/proc/6117/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.65/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.65/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:41.069851] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.65'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.65
+tests.st.utils.utils: INFO: [2020-03-13 11:58:41.247153] docker exec -it host1 sh -c 'docker rm -f wldw-1'
+tests.st.utils.utils: INFO:   # wldw-1
+tests.st.utils.utils: INFO: [2020-03-13 11:58:41.882573] docker exec -it host1 sh -c 'docker run -tid --name wldw-2 --net=none  workload'
+tests.st.utils.utils: INFO:   # a05555236194209b6e9990570c922525add058e70756f6b9429deb7ce658ca23
+tests.st.utils.utils: INFO: [2020-03-13 11:58:42.720743] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-2'
+tests.st.utils.utils: INFO:   # 6353
+tests.st.utils.utils: INFO: [2020-03-13 11:58:42.901078] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-2'
+tests.st.utils.utils: INFO:   # a05555236194209b6e9990570c922525add058e70756f6b9429deb7ce658ca23
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:43.077622] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=a05555236194209b6e9990570c922525add058e70756f6b9429deb7ce658ca23 CNI_NETNS=/proc/6353/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.66/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.66/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:43.382638] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.66'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.66
+tests.st.utils.utils: INFO: [2020-03-13 11:58:43.535882] docker exec -it host1 sh -c 'docker rm -f wldw-2'
+tests.st.utils.utils: INFO:   # wldw-2
+tests.st.utils.utils: INFO: [2020-03-13 11:58:44.282775] docker exec -it host1 sh -c 'docker run -tid --name wldw-3 --net=none  workload'
+tests.st.utils.utils: INFO:   # ffb65838d45c49b88d3ed8fe1a9b7f8b4aa6e2ba99e17b2dde8327f2af7387a6
+tests.st.utils.utils: INFO: [2020-03-13 11:58:45.146511] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-3'
+tests.st.utils.utils: INFO:   # 6600
+tests.st.utils.utils: INFO: [2020-03-13 11:58:45.330784] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-3'
+tests.st.utils.utils: INFO:   # ffb65838d45c49b88d3ed8fe1a9b7f8b4aa6e2ba99e17b2dde8327f2af7387a6
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:45.514060] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=ffb65838d45c49b88d3ed8fe1a9b7f8b4aa6e2ba99e17b2dde8327f2af7387a6 CNI_NETNS=/proc/6600/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.67/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.67/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:45.744631] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.67'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.67
+tests.st.utils.utils: INFO: [2020-03-13 11:58:45.903495] docker exec -it host1 sh -c 'docker rm -f wldw-3'
+tests.st.utils.utils: INFO:   # wldw-3
+tests.st.utils.utils: INFO: [2020-03-13 11:58:46.459571] docker exec -it host1 sh -c 'docker run -tid --name wldw-4 --net=none  workload'
+tests.st.utils.utils: INFO:   # fc1db11a961479a6a2d7599c95b343ccc837d3867a00b59fe56f03000e276890
+tests.st.utils.utils: INFO: [2020-03-13 11:58:47.416888] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-4'
+tests.st.utils.utils: INFO:   # 6846
+tests.st.utils.utils: INFO: [2020-03-13 11:58:47.663937] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-4'
+tests.st.utils.utils: INFO:   # fc1db11a961479a6a2d7599c95b343ccc837d3867a00b59fe56f03000e276890
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:47.858669] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=fc1db11a961479a6a2d7599c95b343ccc837d3867a00b59fe56f03000e276890 CNI_NETNS=/proc/6846/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.68/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.68/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:48.118049] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.68'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.68
+tests.st.utils.utils: INFO: [2020-03-13 11:58:48.272139] docker exec -it host1 sh -c 'docker rm -f wldw-4'
+tests.st.utils.utils: INFO:   # wldw-4
+tests.st.utils.utils: INFO: [2020-03-13 11:58:49.002188] docker exec -it host1 sh -c 'docker run -tid --name wldw-5 --net=none  workload'
+tests.st.utils.utils: INFO:   # e7ec3edd906682132872d097bfc3722990c55a90e02e21f950ac90a82b6e54f7
+tests.st.utils.utils: INFO: [2020-03-13 11:58:49.880360] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-5'
+tests.st.utils.utils: INFO:   # 7086
+tests.st.utils.utils: INFO: [2020-03-13 11:58:50.115241] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-5'
+tests.st.utils.utils: INFO:   # e7ec3edd906682132872d097bfc3722990c55a90e02e21f950ac90a82b6e54f7
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:50.313141] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=e7ec3edd906682132872d097bfc3722990c55a90e02e21f950ac90a82b6e54f7 CNI_NETNS=/proc/7086/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.69/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.69/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:50.567466] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.69'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.69
+tests.st.utils.utils: INFO: [2020-03-13 11:58:50.740117] docker exec -it host1 sh -c 'docker rm -f wldw-5'
+tests.st.utils.utils: INFO:   # wldw-5
+tests.st.utils.utils: INFO: [2020-03-13 11:58:51.490211] docker exec -it host1 sh -c 'docker run -tid --name wldw-6 --net=none  workload'
+tests.st.utils.utils: INFO:   # 8a97fac838454e441b1048c96878bf6e5a7cc58654e402e5bd9bcb16d1a293be
+tests.st.utils.utils: INFO: [2020-03-13 11:58:52.480359] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-6'
+tests.st.utils.utils: INFO:   # 7329
+tests.st.utils.utils: INFO: [2020-03-13 11:58:52.667318] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-6'
+tests.st.utils.utils: INFO:   # 8a97fac838454e441b1048c96878bf6e5a7cc58654e402e5bd9bcb16d1a293be
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:52.850069] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=8a97fac838454e441b1048c96878bf6e5a7cc58654e402e5bd9bcb16d1a293be CNI_NETNS=/proc/7329/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.70/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.70/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:53.097249] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.70'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.70
+tests.st.utils.utils: INFO: [2020-03-13 11:58:53.275899] docker exec -it host1 sh -c 'docker rm -f wldw-6'
+tests.st.utils.utils: INFO:   # wldw-6
+tests.st.utils.utils: INFO: [2020-03-13 11:58:53.911679] docker exec -it host1 sh -c 'docker run -tid --name wldw-7 --net=none  workload'
+tests.st.utils.utils: INFO:   # df18e555e9a40c8500743a3e5a3a13900cbf621f86aed3dd20f2cc5314f126d2
+tests.st.utils.utils: INFO: [2020-03-13 11:58:54.730920] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-7'
+tests.st.utils.utils: INFO:   # 7576
+tests.st.utils.utils: INFO: [2020-03-13 11:58:54.922574] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-7'
+tests.st.utils.utils: INFO:   # df18e555e9a40c8500743a3e5a3a13900cbf621f86aed3dd20f2cc5314f126d2
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:55.101305] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=df18e555e9a40c8500743a3e5a3a13900cbf621f86aed3dd20f2cc5314f126d2 CNI_NETNS=/proc/7576/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.71/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.71/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:55.377399] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.71'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.71
+tests.st.utils.utils: INFO: [2020-03-13 11:58:55.548261] docker exec -it host1 sh -c 'docker rm -f wldw-7'
+tests.st.utils.utils: INFO:   # wldw-7
+tests.st.utils.utils: INFO: [2020-03-13 11:58:56.197486] docker exec -it host1 sh -c 'docker run -tid --name wldw-8 --net=none  workload'
+tests.st.utils.utils: INFO:   # 02cc0fdfd43ef2477ed5b6bfedfd2437d424528b358b41477d14f77c1aa5a67f
+tests.st.utils.utils: INFO: [2020-03-13 11:58:57.124107] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-8'
+tests.st.utils.utils: INFO:   # 7816
+tests.st.utils.utils: INFO: [2020-03-13 11:58:57.317681] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-8'
+tests.st.utils.utils: INFO:   # 02cc0fdfd43ef2477ed5b6bfedfd2437d424528b358b41477d14f77c1aa5a67f
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:57.515458] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=02cc0fdfd43ef2477ed5b6bfedfd2437d424528b358b41477d14f77c1aa5a67f CNI_NETNS=/proc/7816/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.72/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.72/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:57.746529] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.72'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.72
+tests.st.utils.utils: INFO: [2020-03-13 11:58:57.909119] docker exec -it host1 sh -c 'docker rm -f wldw-8'
+tests.st.utils.utils: INFO:   # wldw-8
+tests.st.utils.utils: INFO: [2020-03-13 11:58:58.494451] docker exec -it host1 sh -c 'docker run -tid --name wldw-9 --net=none  workload'
+tests.st.utils.utils: INFO:   # 1a89e6d47f940714d4e73f2fd21f35f08c2deae69ee6d9ef8f7df4d749c83dc0
+tests.st.utils.utils: INFO: [2020-03-13 11:58:59.449240] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-9'
+tests.st.utils.utils: INFO:   # 8059
+tests.st.utils.utils: INFO: [2020-03-13 11:58:59.685764] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-9'
+tests.st.utils.utils: INFO:   # 1a89e6d47f940714d4e73f2fd21f35f08c2deae69ee6d9ef8f7df4d749c83dc0
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:58:59.886244] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=1a89e6d47f940714d4e73f2fd21f35f08c2deae69ee6d9ef8f7df4d749c83dc0 CNI_NETNS=/proc/8059/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.73/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.73/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:00.203181] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.73'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.73
+tests.st.utils.utils: INFO: [2020-03-13 11:59:00.392725] docker exec -it host1 sh -c 'docker rm -f wldw-9'
+tests.st.utils.utils: INFO:   # wldw-9
+tests.st.utils.utils: INFO: [2020-03-13 11:59:01.082149] docker exec -it host1 sh -c 'docker run -tid --name wldw-10 --net=none  workload'
+tests.st.utils.utils: INFO:   # 73a28ec8c6ef7701cd342b72d5cc17b4228a166e29069ef8437e33121eeca3b2
+tests.st.utils.utils: INFO: [2020-03-13 11:59:01.986401] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-10'
+tests.st.utils.utils: INFO:   # 8299
+tests.st.utils.utils: INFO: [2020-03-13 11:59:02.186491] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-10'
+tests.st.utils.utils: INFO:   # 73a28ec8c6ef7701cd342b72d5cc17b4228a166e29069ef8437e33121eeca3b2
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:02.388049] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=73a28ec8c6ef7701cd342b72d5cc17b4228a166e29069ef8437e33121eeca3b2 CNI_NETNS=/proc/8299/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.74/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.74/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:02.622589] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.74'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.74
+tests.st.utils.utils: INFO: [2020-03-13 11:59:02.795165] docker exec -it host1 sh -c 'docker rm -f wldw-10'
+tests.st.utils.utils: INFO:   # wldw-10
+tests.st.utils.utils: INFO: [2020-03-13 11:59:03.485844] docker exec -it host1 sh -c 'docker run -tid --name wldw-11 --net=none  workload'
+tests.st.utils.utils: INFO:   # 111975587a2f260ca31574e3ffa52111d58785b549e91b78dead6b2b47f3ea23
+tests.st.utils.utils: INFO: [2020-03-13 11:59:04.341511] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-11'
+tests.st.utils.utils: INFO:   # 8533
+tests.st.utils.utils: INFO: [2020-03-13 11:59:04.532814] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-11'
+tests.st.utils.utils: INFO:   # 111975587a2f260ca31574e3ffa52111d58785b549e91b78dead6b2b47f3ea23
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:04.726131] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=111975587a2f260ca31574e3ffa52111d58785b549e91b78dead6b2b47f3ea23 CNI_NETNS=/proc/8533/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.75/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.75/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:04.970628] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.75'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.75
+tests.st.utils.utils: INFO: [2020-03-13 11:59:05.133542] docker exec -it host1 sh -c 'docker rm -f wldw-11'
+tests.st.utils.utils: INFO:   # wldw-11
+tests.st.utils.utils: INFO: [2020-03-13 11:59:05.749494] docker exec -it host1 sh -c 'docker run -tid --name wldw-12 --net=none  workload'
+tests.st.utils.utils: INFO:   # 3bbbd7f924205bd89d7887893582a8d84ebea15d5a8ca74f58e53cacb74e9184
+tests.st.utils.utils: INFO: [2020-03-13 11:59:06.535753] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-12'
+tests.st.utils.utils: INFO:   # 8775
+tests.st.utils.utils: INFO: [2020-03-13 11:59:06.752306] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-12'
+tests.st.utils.utils: INFO:   # 3bbbd7f924205bd89d7887893582a8d84ebea15d5a8ca74f58e53cacb74e9184
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:06.954876] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=3bbbd7f924205bd89d7887893582a8d84ebea15d5a8ca74f58e53cacb74e9184 CNI_NETNS=/proc/8775/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.76/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.76/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:07.187378] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.76'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.76
+tests.st.utils.utils: INFO: [2020-03-13 11:59:07.348275] docker exec -it host1 sh -c 'docker rm -f wldw-12'
+tests.st.utils.utils: INFO:   # wldw-12
+tests.st.utils.utils: INFO: [2020-03-13 11:59:07.983596] docker exec -it host1 sh -c 'docker run -tid --name wldw-13 --net=none  workload'
+tests.st.utils.utils: INFO:   # 9f04899236ebcbaff1a5b9aac468cb64a13950678edd2d715187e31d11a79804
+tests.st.utils.utils: INFO: [2020-03-13 11:59:08.731475] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-13'
+tests.st.utils.utils: INFO:   # 9013
+tests.st.utils.utils: INFO: [2020-03-13 11:59:08.918699] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-13'
+tests.st.utils.utils: INFO:   # 9f04899236ebcbaff1a5b9aac468cb64a13950678edd2d715187e31d11a79804
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:09.098653] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=9f04899236ebcbaff1a5b9aac468cb64a13950678edd2d715187e31d11a79804 CNI_NETNS=/proc/9013/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.77/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.77/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:09.337412] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.77'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.77
+tests.st.utils.utils: INFO: [2020-03-13 11:59:09.512889] docker exec -it host1 sh -c 'docker rm -f wldw-13'
+tests.st.utils.utils: INFO:   # wldw-13
+tests.st.utils.utils: INFO: [2020-03-13 11:59:10.198823] docker exec -it host1 sh -c 'docker run -tid --name wldw-14 --net=none  workload'
+tests.st.utils.utils: INFO:   # d7d8ecdf65f736ba7b480951536b753da6f430ca07549dcc95672d6f0df09077
+tests.st.utils.utils: INFO: [2020-03-13 11:59:11.223619] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-14'
+tests.st.utils.utils: INFO:   # 9248
+tests.st.utils.utils: INFO: [2020-03-13 11:59:11.430571] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-14'
+tests.st.utils.utils: INFO:   # d7d8ecdf65f736ba7b480951536b753da6f430ca07549dcc95672d6f0df09077
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:11.612779] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=d7d8ecdf65f736ba7b480951536b753da6f430ca07549dcc95672d6f0df09077 CNI_NETNS=/proc/9248/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.78/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.78/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:11.848658] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.78'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.78
+tests.st.utils.utils: INFO: [2020-03-13 11:59:12.008378] docker exec -it host1 sh -c 'docker rm -f wldw-14'
+tests.st.utils.utils: INFO:   # wldw-14
+tests.st.utils.utils: INFO: [2020-03-13 11:59:12.881098] docker exec -it host1 sh -c 'docker run -tid --name wldw-15 --net=none  workload'
+tests.st.utils.utils: INFO:   # ee9c5932556cf5c24b31707e8d2cd0e3f73c3d404efb9855659b58298c7ffdc5
+tests.st.utils.utils: INFO: [2020-03-13 11:59:13.734936] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-15'
+tests.st.utils.utils: INFO:   # 9487
+tests.st.utils.utils: INFO: [2020-03-13 11:59:13.922770] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-15'
+tests.st.utils.utils: INFO:   # ee9c5932556cf5c24b31707e8d2cd0e3f73c3d404efb9855659b58298c7ffdc5
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:14.102351] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=ee9c5932556cf5c24b31707e8d2cd0e3f73c3d404efb9855659b58298c7ffdc5 CNI_NETNS=/proc/9487/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.79/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.79/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:14.326270] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.79'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.79
+tests.st.utils.utils: INFO: [2020-03-13 11:59:14.483479] docker exec -it host1 sh -c 'docker rm -f wldw-15'
+tests.st.utils.utils: INFO:   # wldw-15
+tests.st.utils.utils: INFO: [2020-03-13 11:59:15.049036] docker exec -it host1 sh -c 'docker run -tid --name wldw-16 --net=none  workload'
+tests.st.utils.utils: INFO:   # 663ac9399b8f17d4c4828e6e0aa2ef97926cdcfc1b4e2bea8339fa32e8744438
+tests.st.utils.utils: INFO: [2020-03-13 11:59:15.931105] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-16'
+tests.st.utils.utils: INFO:   # 9728
+tests.st.utils.utils: INFO: [2020-03-13 11:59:16.114807] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-16'
+tests.st.utils.utils: INFO:   # 663ac9399b8f17d4c4828e6e0aa2ef97926cdcfc1b4e2bea8339fa32e8744438
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:16.300026] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=663ac9399b8f17d4c4828e6e0aa2ef97926cdcfc1b4e2bea8339fa32e8744438 CNI_NETNS=/proc/9728/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.80/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.80/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:16.561248] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.80'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.80
+tests.st.utils.utils: INFO: [2020-03-13 11:59:16.717960] docker exec -it host1 sh -c 'docker rm -f wldw-16'
+tests.st.utils.utils: INFO:   # wldw-16
+tests.st.utils.utils: INFO: [2020-03-13 11:59:17.426075] docker exec -it host1 sh -c 'docker run -tid --name wldw-17 --net=none  workload'
+tests.st.utils.utils: INFO:   # d868507c84d1f79ac7f2ec00a5965527d37076bf82d305f7e55c1320c4ea88fd
+tests.st.utils.utils: INFO: [2020-03-13 11:59:18.324657] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-17'
+tests.st.utils.utils: INFO:   # 9970
+tests.st.utils.utils: INFO: [2020-03-13 11:59:18.535669] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-17'
+tests.st.utils.utils: INFO:   # d868507c84d1f79ac7f2ec00a5965527d37076bf82d305f7e55c1320c4ea88fd
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:18.728585] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=d868507c84d1f79ac7f2ec00a5965527d37076bf82d305f7e55c1320c4ea88fd CNI_NETNS=/proc/9970/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.81/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.81/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:18.980081] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.81'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.81
+tests.st.utils.utils: INFO: [2020-03-13 11:59:19.136357] docker exec -it host1 sh -c 'docker rm -f wldw-17'
+tests.st.utils.utils: INFO:   # wldw-17
+tests.st.utils.utils: INFO: [2020-03-13 11:59:19.788157] docker exec -it host1 sh -c 'docker run -tid --name wldw-18 --net=none  workload'
+tests.st.utils.utils: INFO:   # b95fc254974b1cc930cd01e3031088da57265ab83bf5dcbc786751f74ad9b354
+tests.st.utils.utils: INFO: [2020-03-13 11:59:20.583042] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-18'
+tests.st.utils.utils: INFO:   # 10209
+tests.st.utils.utils: INFO: [2020-03-13 11:59:20.783325] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-18'
+tests.st.utils.utils: INFO:   # b95fc254974b1cc930cd01e3031088da57265ab83bf5dcbc786751f74ad9b354
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:20.972366] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=b95fc254974b1cc930cd01e3031088da57265ab83bf5dcbc786751f74ad9b354 CNI_NETNS=/proc/10209/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.82/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.82/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:21.197540] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.82'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.82
+tests.st.utils.utils: INFO: [2020-03-13 11:59:21.383238] docker exec -it host1 sh -c 'docker rm -f wldw-18'
+tests.st.utils.utils: INFO:   # wldw-18
+tests.st.utils.utils: INFO: [2020-03-13 11:59:22.087244] docker exec -it host1 sh -c 'docker run -tid --name wldw-19 --net=none  workload'
+tests.st.utils.utils: INFO:   # 08f15e28758419fe3c022d1ab0dfbe3f304a725b397fb4211944bd5204582850
+tests.st.utils.utils: INFO: [2020-03-13 11:59:22.820623] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-19'
+tests.st.utils.utils: INFO:   # 10442
+tests.st.utils.utils: INFO: [2020-03-13 11:59:23.001108] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-19'
+tests.st.utils.utils: INFO:   # 08f15e28758419fe3c022d1ab0dfbe3f304a725b397fb4211944bd5204582850
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:23.187821] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=08f15e28758419fe3c022d1ab0dfbe3f304a725b397fb4211944bd5204582850 CNI_NETNS=/proc/10442/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.83/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.83/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:23.442740] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.83'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.83
+tests.st.utils.utils: INFO: [2020-03-13 11:59:23.601607] docker exec -it host1 sh -c 'docker rm -f wldw-19'
+tests.st.utils.utils: INFO:   # wldw-19
+tests.st.utils.utils: INFO: [2020-03-13 11:59:24.277628] docker exec -it host1 sh -c 'docker run -tid --name wldw-20 --net=none  workload'
+tests.st.utils.utils: INFO:   # d615b877f3d2975f3c28e4083602f829614b1a91237a8c0a61bee321916cb625
+tests.st.utils.utils: INFO: [2020-03-13 11:59:25.045408] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-20'
+tests.st.utils.utils: INFO:   # 10676
+tests.st.utils.utils: INFO: [2020-03-13 11:59:25.229778] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-20'
+tests.st.utils.utils: INFO:   # d615b877f3d2975f3c28e4083602f829614b1a91237a8c0a61bee321916cb625
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:25.417836] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=d615b877f3d2975f3c28e4083602f829614b1a91237a8c0a61bee321916cb625 CNI_NETNS=/proc/10676/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.84/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.84/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:25.665451] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.84'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.84
+tests.st.utils.utils: INFO: [2020-03-13 11:59:25.827903] docker exec -it host1 sh -c 'docker rm -f wldw-20'
+tests.st.utils.utils: INFO:   # wldw-20
+tests.st.utils.utils: INFO: [2020-03-13 11:59:26.680321] docker exec -it host1 sh -c 'docker run -tid --name wldw-21 --net=none  workload'
+tests.st.utils.utils: INFO:   # d757a84cee00f322bea8336281892924bf006823372a6b490f7a5e164577e0e9
+tests.st.utils.utils: INFO: [2020-03-13 11:59:27.725189] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-21'
+tests.st.utils.utils: INFO:   # 10919
+tests.st.utils.utils: INFO: [2020-03-13 11:59:27.913070] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-21'
+tests.st.utils.utils: INFO:   # d757a84cee00f322bea8336281892924bf006823372a6b490f7a5e164577e0e9
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:28.099442] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=d757a84cee00f322bea8336281892924bf006823372a6b490f7a5e164577e0e9 CNI_NETNS=/proc/10919/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.85/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.85/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:28.360131] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.85'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.85
+tests.st.utils.utils: INFO: [2020-03-13 11:59:28.516558] docker exec -it host1 sh -c 'docker rm -f wldw-21'
+tests.st.utils.utils: INFO:   # wldw-21
+tests.st.utils.utils: INFO: [2020-03-13 11:59:29.157296] docker exec -it host1 sh -c 'docker run -tid --name wldw-22 --net=none  workload'
+tests.st.utils.utils: INFO:   # 961f7b2d5fe0edcf0a228ac86b25af7fd0d4f2536ae8593427de951983de1cfe
+tests.st.utils.utils: INFO: [2020-03-13 11:59:29.936099] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-22'
+tests.st.utils.utils: INFO:   # 11153
+tests.st.utils.utils: INFO: [2020-03-13 11:59:30.121777] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-22'
+tests.st.utils.utils: INFO:   # 961f7b2d5fe0edcf0a228ac86b25af7fd0d4f2536ae8593427de951983de1cfe
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:30.323175] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=961f7b2d5fe0edcf0a228ac86b25af7fd0d4f2536ae8593427de951983de1cfe CNI_NETNS=/proc/11153/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.86/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.86/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:30.559061] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.86'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.86
+tests.st.utils.utils: INFO: [2020-03-13 11:59:30.729488] docker exec -it host1 sh -c 'docker rm -f wldw-22'
+tests.st.utils.utils: INFO:   # wldw-22
+tests.st.utils.utils: INFO: [2020-03-13 11:59:31.530924] docker exec -it host1 sh -c 'docker run -tid --name wldw-23 --net=none  workload'
+tests.st.utils.utils: INFO:   # 85967f92095e338754f4f1cbeb16831f6dc9fd97fb41b6210f8cea1792c5343c
+tests.st.utils.utils: INFO: [2020-03-13 11:59:32.232711] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-23'
+tests.st.utils.utils: INFO:   # 11400
+tests.st.utils.utils: INFO: [2020-03-13 11:59:32.420320] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-23'
+tests.st.utils.utils: INFO:   # 85967f92095e338754f4f1cbeb16831f6dc9fd97fb41b6210f8cea1792c5343c
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:32.614445] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=85967f92095e338754f4f1cbeb16831f6dc9fd97fb41b6210f8cea1792c5343c CNI_NETNS=/proc/11400/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.87/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.87/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:32.844292] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.87'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.87
+tests.st.utils.utils: INFO: [2020-03-13 11:59:32.996695] docker exec -it host1 sh -c 'docker rm -f wldw-23'
+tests.st.utils.utils: INFO:   # wldw-23
+tests.st.utils.utils: INFO: [2020-03-13 11:59:33.811859] docker exec -it host1 sh -c 'docker run -tid --name wldw-24 --net=none  workload'
+tests.st.utils.utils: INFO:   # 19ab65cad96fd5e49248fb7c7f8f39b27e7d67993a3ec2914ffa6d76e1acf437
+tests.st.utils.utils: INFO: [2020-03-13 11:59:34.538621] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-24'
+tests.st.utils.utils: INFO:   # 11636
+tests.st.utils.utils: INFO: [2020-03-13 11:59:34.738212] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-24'
+tests.st.utils.utils: INFO:   # 19ab65cad96fd5e49248fb7c7f8f39b27e7d67993a3ec2914ffa6d76e1acf437
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:34.922009] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=19ab65cad96fd5e49248fb7c7f8f39b27e7d67993a3ec2914ffa6d76e1acf437 CNI_NETNS=/proc/11636/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.88/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.88/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:35.156630] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.88'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.88
+tests.st.utils.utils: INFO: [2020-03-13 11:59:35.323776] docker exec -it host1 sh -c 'docker rm -f wldw-24'
+tests.st.utils.utils: INFO:   # wldw-24
+tests.st.utils.utils: INFO: [2020-03-13 11:59:36.102153] docker exec -it host1 sh -c 'docker run -tid --name wldw-25 --net=none  workload'
+tests.st.utils.utils: INFO:   # 0f7a6ea110762cc01a752a08c8292c59a10c60d17083c20817ef7e8089b431e1
+tests.st.utils.utils: INFO: [2020-03-13 11:59:36.963210] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-25'
+tests.st.utils.utils: INFO:   # 11879
+tests.st.utils.utils: INFO: [2020-03-13 11:59:37.153674] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-25'
+tests.st.utils.utils: INFO:   # 0f7a6ea110762cc01a752a08c8292c59a10c60d17083c20817ef7e8089b431e1
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:37.345132] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=0f7a6ea110762cc01a752a08c8292c59a10c60d17083c20817ef7e8089b431e1 CNI_NETNS=/proc/11879/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.89/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.89/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:37.574304] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.89'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.89
+tests.st.utils.utils: INFO: [2020-03-13 11:59:37.735400] docker exec -it host1 sh -c 'docker rm -f wldw-25'
+tests.st.utils.utils: INFO:   # wldw-25
+tests.st.utils.utils: INFO: [2020-03-13 11:59:38.379838] docker exec -it host1 sh -c 'docker run -tid --name wldw-26 --net=none  workload'
+tests.st.utils.utils: INFO:   # debd288db64121ee81d00aff66517ba318ca292f40b9ec62f2564a7554a21bf6
+tests.st.utils.utils: INFO: [2020-03-13 11:59:39.426871] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-26'
+tests.st.utils.utils: INFO:   # 12125
+tests.st.utils.utils: INFO: [2020-03-13 11:59:39.612926] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-26'
+tests.st.utils.utils: INFO:   # debd288db64121ee81d00aff66517ba318ca292f40b9ec62f2564a7554a21bf6
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:39.809873] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=debd288db64121ee81d00aff66517ba318ca292f40b9ec62f2564a7554a21bf6 CNI_NETNS=/proc/12125/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.90/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.90/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:40.061763] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.90'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.90
+tests.st.utils.utils: INFO: [2020-03-13 11:59:40.224782] docker exec -it host1 sh -c 'docker rm -f wldw-26'
+tests.st.utils.utils: INFO:   # wldw-26
+tests.st.utils.utils: INFO: [2020-03-13 11:59:40.908524] docker exec -it host1 sh -c 'docker run -tid --name wldw-27 --net=none  workload'
+tests.st.utils.utils: INFO:   # f8df43efa275bb7444205926b13d936363d3321d6ab18b609502e4a111524ba9
+tests.st.utils.utils: INFO: [2020-03-13 11:59:42.020249] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-27'
+tests.st.utils.utils: INFO:   # 12362
+tests.st.utils.utils: INFO: [2020-03-13 11:59:42.251119] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-27'
+tests.st.utils.utils: INFO:   # f8df43efa275bb7444205926b13d936363d3321d6ab18b609502e4a111524ba9
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:42.427374] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=f8df43efa275bb7444205926b13d936363d3321d6ab18b609502e4a111524ba9 CNI_NETNS=/proc/12362/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.91/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.91/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:42.678667] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.91'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.91
+tests.st.utils.utils: INFO: [2020-03-13 11:59:42.845794] docker exec -it host1 sh -c 'docker rm -f wldw-27'
+tests.st.utils.utils: INFO:   # wldw-27
+tests.st.utils.utils: INFO: [2020-03-13 11:59:43.501819] docker exec -it host1 sh -c 'docker run -tid --name wldw-28 --net=none  workload'
+tests.st.utils.utils: INFO:   # 8216aee3c82aed72e88bc4d04e9887573ffbdf6b4203c29e7133de3cb41ea1a5
+tests.st.utils.utils: INFO: [2020-03-13 11:59:44.482410] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-28'
+tests.st.utils.utils: INFO:   # 12597
+tests.st.utils.utils: INFO: [2020-03-13 11:59:44.731740] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-28'
+tests.st.utils.utils: INFO:   # 8216aee3c82aed72e88bc4d04e9887573ffbdf6b4203c29e7133de3cb41ea1a5
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:44.912527] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=8216aee3c82aed72e88bc4d04e9887573ffbdf6b4203c29e7133de3cb41ea1a5 CNI_NETNS=/proc/12597/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.92/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.92/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:45.187766] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.92'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.92
+tests.st.utils.utils: INFO: [2020-03-13 11:59:45.352184] docker exec -it host1 sh -c 'docker rm -f wldw-28'
+tests.st.utils.utils: INFO:   # wldw-28
+tests.st.utils.utils: INFO: [2020-03-13 11:59:46.040798] docker exec -it host1 sh -c 'docker run -tid --name wldw-29 --net=none  workload'
+tests.st.utils.utils: INFO:   # 23f569b8e449234a36cdb8a358215c24b9233ca4540700575a160a7789f791d2
+tests.st.utils.utils: INFO: [2020-03-13 11:59:46.744339] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-29'
+tests.st.utils.utils: INFO:   # 12836
+tests.st.utils.utils: INFO: [2020-03-13 11:59:46.933406] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-29'
+tests.st.utils.utils: INFO:   # 23f569b8e449234a36cdb8a358215c24b9233ca4540700575a160a7789f791d2
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:47.123954] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=23f569b8e449234a36cdb8a358215c24b9233ca4540700575a160a7789f791d2 CNI_NETNS=/proc/12836/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.93/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.93/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:47.381815] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.93'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.93
+tests.st.utils.utils: INFO: [2020-03-13 11:59:47.550005] docker exec -it host1 sh -c 'docker rm -f wldw-29'
+tests.st.utils.utils: INFO:   # wldw-29
+tests.st.utils.utils: INFO: [2020-03-13 11:59:48.221444] docker exec -it host1 sh -c 'docker run -tid --name wldw-30 --net=none  workload'
+tests.st.utils.utils: INFO:   # dec6c869c6c8fdb359ff56467b0a36112379726150610cc68f3ca25a21edad08
+tests.st.utils.utils: INFO: [2020-03-13 11:59:49.046893] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-30'
+tests.st.utils.utils: INFO:   # 13079
+tests.st.utils.utils: INFO: [2020-03-13 11:59:49.221492] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-30'
+tests.st.utils.utils: INFO:   # dec6c869c6c8fdb359ff56467b0a36112379726150610cc68f3ca25a21edad08
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:49.398618] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=dec6c869c6c8fdb359ff56467b0a36112379726150610cc68f3ca25a21edad08 CNI_NETNS=/proc/13079/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.94/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.94/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:49.628932] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.94'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.94
+tests.st.utils.utils: INFO: [2020-03-13 11:59:49.825051] docker exec -it host1 sh -c 'docker rm -f wldw-30'
+tests.st.utils.utils: INFO:   # wldw-30
+tests.st.utils.utils: INFO: [2020-03-13 11:59:50.419086] docker exec -it host1 sh -c 'docker run -tid --name wldw-31 --net=none  workload'
+tests.st.utils.utils: INFO:   # 677d98557c9b4f2720934fda767c5e40e8efb6f502b8178f4c8573710696f8ec
+tests.st.utils.utils: INFO: [2020-03-13 11:59:51.146358] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-31'
+tests.st.utils.utils: INFO:   # 13324
+tests.st.utils.utils: INFO: [2020-03-13 11:59:51.340901] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-31'
+tests.st.utils.utils: INFO:   # 677d98557c9b4f2720934fda767c5e40e8efb6f502b8178f4c8573710696f8ec
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:51.522916] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=677d98557c9b4f2720934fda767c5e40e8efb6f502b8178f4c8573710696f8ec CNI_NETNS=/proc/13324/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.95/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.95/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:51.780818] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.95'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.95
+tests.st.utils.utils: INFO: [2020-03-13 11:59:51.937549] docker exec -it host1 sh -c 'docker rm -f wldw-31'
+tests.st.utils.utils: INFO:   # wldw-31
+tests.st.utils.utils: INFO: [2020-03-13 11:59:52.688049] docker exec -it host1 sh -c 'docker run -tid --name wldw-32 --net=none  workload'
+tests.st.utils.utils: INFO:   # c4d55709dbe641d331654a256cce4485bd2967bc0ec791f4cfbf7229cffa759c
+tests.st.utils.utils: INFO: [2020-03-13 11:59:53.440138] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-32'
+tests.st.utils.utils: INFO:   # 13558
+tests.st.utils.utils: INFO: [2020-03-13 11:59:53.626491] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-32'
+tests.st.utils.utils: INFO:   # c4d55709dbe641d331654a256cce4485bd2967bc0ec791f4cfbf7229cffa759c
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:53.808859] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=c4d55709dbe641d331654a256cce4485bd2967bc0ec791f4cfbf7229cffa759c CNI_NETNS=/proc/13558/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.96/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.96/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:54.068068] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.96'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.96
+tests.st.utils.utils: INFO: [2020-03-13 11:59:54.230332] docker exec -it host1 sh -c 'docker rm -f wldw-32'
+tests.st.utils.utils: INFO:   # wldw-32
+tests.st.utils.utils: INFO: [2020-03-13 11:59:54.829361] docker exec -it host1 sh -c 'docker run -tid --name wldw-33 --net=none  workload'
+tests.st.utils.utils: INFO:   # 395850869e99009bc3249b6a07d551062cef02e2fc62501ca619ac84372a623f
+tests.st.utils.utils: INFO: [2020-03-13 11:59:55.631227] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-33'
+tests.st.utils.utils: INFO:   # 13799
+tests.st.utils.utils: INFO: [2020-03-13 11:59:55.820650] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-33'
+tests.st.utils.utils: INFO:   # 395850869e99009bc3249b6a07d551062cef02e2fc62501ca619ac84372a623f
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:56.005186] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=395850869e99009bc3249b6a07d551062cef02e2fc62501ca619ac84372a623f CNI_NETNS=/proc/13799/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.97/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.97/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:56.274656] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.97'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.97
+tests.st.utils.utils: INFO: [2020-03-13 11:59:56.436297] docker exec -it host1 sh -c 'docker rm -f wldw-33'
+tests.st.utils.utils: INFO:   # wldw-33
+tests.st.utils.utils: INFO: [2020-03-13 11:59:57.114171] docker exec -it host1 sh -c 'docker run -tid --name wldw-34 --net=none  workload'
+tests.st.utils.utils: INFO:   # f07b423ffd8af7aabe972906e77fbcfcf3516a67af2669bdbb3898b40a7ec261
+tests.st.utils.utils: INFO: [2020-03-13 11:59:57.949955] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-34'
+tests.st.utils.utils: INFO:   # 14041
+tests.st.utils.utils: INFO: [2020-03-13 11:59:58.135850] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-34'
+tests.st.utils.utils: INFO:   # f07b423ffd8af7aabe972906e77fbcfcf3516a67af2669bdbb3898b40a7ec261
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:58.328269] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=f07b423ffd8af7aabe972906e77fbcfcf3516a67af2669bdbb3898b40a7ec261 CNI_NETNS=/proc/14041/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.98/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.98/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 11:59:58.568225] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.98'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.98
+tests.st.utils.utils: INFO: [2020-03-13 11:59:58.725144] docker exec -it host1 sh -c 'docker rm -f wldw-34'
+tests.st.utils.utils: INFO:   # wldw-34
+tests.st.utils.utils: INFO: [2020-03-13 11:59:59.496939] docker exec -it host1 sh -c 'docker run -tid --name wldw-35 --net=none  workload'
+tests.st.utils.utils: INFO:   # 52ce63fd8b8599df27beb06b8aa457f8e629c63d700a51b49db14284e397ce16
+tests.st.utils.utils: INFO: [2020-03-13 12:00:00.484359] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-35'
+tests.st.utils.utils: INFO:   # 14276
+tests.st.utils.utils: INFO: [2020-03-13 12:00:00.669429] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-35'
+tests.st.utils.utils: INFO:   # 52ce63fd8b8599df27beb06b8aa457f8e629c63d700a51b49db14284e397ce16
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:00.857807] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=52ce63fd8b8599df27beb06b8aa457f8e629c63d700a51b49db14284e397ce16 CNI_NETNS=/proc/14276/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.99/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.99/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:01.082301] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.99'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.99
+tests.st.utils.utils: INFO: [2020-03-13 12:00:01.268413] docker exec -it host1 sh -c 'docker rm -f wldw-35'
+tests.st.utils.utils: INFO:   # wldw-35
+tests.st.utils.utils: INFO: [2020-03-13 12:00:01.979010] docker exec -it host1 sh -c 'docker run -tid --name wldw-36 --net=none  workload'
+tests.st.utils.utils: INFO:   # ed267f0f9c10f45ad59aedb24927b983f178bb7bfef911e0cc892147e5d5e3e6
+tests.st.utils.utils: INFO: [2020-03-13 12:00:02.688807] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-36'
+tests.st.utils.utils: INFO:   # 14514
+tests.st.utils.utils: INFO: [2020-03-13 12:00:02.879246] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-36'
+tests.st.utils.utils: INFO:   # ed267f0f9c10f45ad59aedb24927b983f178bb7bfef911e0cc892147e5d5e3e6
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:03.064361] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=ed267f0f9c10f45ad59aedb24927b983f178bb7bfef911e0cc892147e5d5e3e6 CNI_NETNS=/proc/14514/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.100/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.100/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:03.380284] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.100'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.100
+tests.st.utils.utils: INFO: [2020-03-13 12:00:03.548184] docker exec -it host1 sh -c 'docker rm -f wldw-36'
+tests.st.utils.utils: INFO:   # wldw-36
+tests.st.utils.utils: INFO: [2020-03-13 12:00:04.280097] docker exec -it host1 sh -c 'docker run -tid --name wldw-37 --net=none  workload'
+tests.st.utils.utils: INFO:   # dccd27dfa08eb492faebf11c9549d2f523196558b48940272a0535ccb5d83771
+tests.st.utils.utils: INFO: [2020-03-13 12:00:05.121281] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-37'
+tests.st.utils.utils: INFO:   # 14757
+tests.st.utils.utils: INFO: [2020-03-13 12:00:05.308937] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-37'
+tests.st.utils.utils: INFO:   # dccd27dfa08eb492faebf11c9549d2f523196558b48940272a0535ccb5d83771
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:05.511850] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=dccd27dfa08eb492faebf11c9549d2f523196558b48940272a0535ccb5d83771 CNI_NETNS=/proc/14757/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.101/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.101/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:05.752333] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.101'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.101
+tests.st.utils.utils: INFO: [2020-03-13 12:00:05.906168] docker exec -it host1 sh -c 'docker rm -f wldw-37'
+tests.st.utils.utils: INFO:   # wldw-37
+tests.st.utils.utils: INFO: [2020-03-13 12:00:06.780038] docker exec -it host1 sh -c 'docker run -tid --name wldw-38 --net=none  workload'
+tests.st.utils.utils: INFO:   # 9711ae88f990a476ab3a6af576c95b74196d022e7f77366026c902bbea0b3230
+tests.st.utils.utils: INFO: [2020-03-13 12:00:07.775322] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-38'
+tests.st.utils.utils: INFO:   # 15000
+tests.st.utils.utils: INFO: [2020-03-13 12:00:07.993862] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-38'
+tests.st.utils.utils: INFO:   # 9711ae88f990a476ab3a6af576c95b74196d022e7f77366026c902bbea0b3230
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:08.175933] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=9711ae88f990a476ab3a6af576c95b74196d022e7f77366026c902bbea0b3230 CNI_NETNS=/proc/15000/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.102/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.102/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:08.449864] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.102'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.102
+tests.st.utils.utils: INFO: [2020-03-13 12:00:08.615970] docker exec -it host1 sh -c 'docker rm -f wldw-38'
+tests.st.utils.utils: INFO:   # wldw-38
+tests.st.utils.utils: INFO: [2020-03-13 12:00:09.291767] docker exec -it host1 sh -c 'docker run -tid --name wldw-39 --net=none  workload'
+tests.st.utils.utils: INFO:   # 7a30e4fd054e11c2b8bec3e8476cc39f9eb8db3e1046a6ae56aca7e8832768b2
+tests.st.utils.utils: INFO: [2020-03-13 12:00:10.215410] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-39'
+tests.st.utils.utils: INFO:   # 15233
+tests.st.utils.utils: INFO: [2020-03-13 12:00:10.405415] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-39'
+tests.st.utils.utils: INFO:   # 7a30e4fd054e11c2b8bec3e8476cc39f9eb8db3e1046a6ae56aca7e8832768b2
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:10.594487] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=7a30e4fd054e11c2b8bec3e8476cc39f9eb8db3e1046a6ae56aca7e8832768b2 CNI_NETNS=/proc/15233/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.103/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.103/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:10.842319] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.103'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.103
+tests.st.utils.utils: INFO: [2020-03-13 12:00:11.003387] docker exec -it host1 sh -c 'docker rm -f wldw-39'
+tests.st.utils.utils: INFO:   # wldw-39
+tests.st.utils.utils: INFO: [2020-03-13 12:00:11.896489] docker exec -it host1 sh -c 'docker run -tid --name wldw-40 --net=none  workload'
+tests.st.utils.utils: INFO:   # 3cffd0af34e028c87d402b126dc8f18adf6beaf6551196b0b6ccea050b92e2aa
+tests.st.utils.utils: INFO: [2020-03-13 12:00:12.725948] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-40'
+tests.st.utils.utils: INFO:   # 15477
+tests.st.utils.utils: INFO: [2020-03-13 12:00:12.911168] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-40'
+tests.st.utils.utils: INFO:   # 3cffd0af34e028c87d402b126dc8f18adf6beaf6551196b0b6ccea050b92e2aa
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:13.093783] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=3cffd0af34e028c87d402b126dc8f18adf6beaf6551196b0b6ccea050b92e2aa CNI_NETNS=/proc/15477/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.104/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.104/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:13.330989] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.104'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.104
+tests.st.utils.utils: INFO: [2020-03-13 12:00:13.489138] docker exec -it host1 sh -c 'docker rm -f wldw-40'
+tests.st.utils.utils: INFO:   # wldw-40
+tests.st.utils.utils: INFO: [2020-03-13 12:00:14.401367] docker exec -it host1 sh -c 'docker run -tid --name wldw-41 --net=none  workload'
+tests.st.utils.utils: INFO:   # 64ed86e019497a2f7db5f86d0001122bfe3fc93128efc16b951a553cbf910082
+tests.st.utils.utils: INFO: [2020-03-13 12:00:15.401379] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-41'
+tests.st.utils.utils: INFO:   # 15719
+tests.st.utils.utils: INFO: [2020-03-13 12:00:15.588001] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-41'
+tests.st.utils.utils: INFO:   # 64ed86e019497a2f7db5f86d0001122bfe3fc93128efc16b951a553cbf910082
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:15.800931] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=64ed86e019497a2f7db5f86d0001122bfe3fc93128efc16b951a553cbf910082 CNI_NETNS=/proc/15719/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.105/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.105/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:16.056546] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.105'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.105
+tests.st.utils.utils: INFO: [2020-03-13 12:00:16.217099] docker exec -it host1 sh -c 'docker rm -f wldw-41'
+tests.st.utils.utils: INFO:   # wldw-41
+tests.st.utils.utils: INFO: [2020-03-13 12:00:16.931810] docker exec -it host1 sh -c 'docker run -tid --name wldw-42 --net=none  workload'
+tests.st.utils.utils: INFO:   # 043e7b59f3a5da8586230e498bf8ff62c102e44c48762861ac2b5452a0da7810
+tests.st.utils.utils: INFO: [2020-03-13 12:00:17.835787] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-42'
+tests.st.utils.utils: INFO:   # 15959
+tests.st.utils.utils: INFO: [2020-03-13 12:00:18.015789] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-42'
+tests.st.utils.utils: INFO:   # 043e7b59f3a5da8586230e498bf8ff62c102e44c48762861ac2b5452a0da7810
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:18.200780] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=043e7b59f3a5da8586230e498bf8ff62c102e44c48762861ac2b5452a0da7810 CNI_NETNS=/proc/15959/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.106/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.106/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:18.470254] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.106'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.106
+tests.st.utils.utils: INFO: [2020-03-13 12:00:18.633916] docker exec -it host1 sh -c 'docker rm -f wldw-42'
+tests.st.utils.utils: INFO:   # wldw-42
+tests.st.utils.utils: INFO: [2020-03-13 12:00:19.285396] docker exec -it host1 sh -c 'docker run -tid --name wldw-43 --net=none  workload'
+tests.st.utils.utils: INFO:   # 6aac1a84936947c72b72f1d26cbf142c1e286a92367800fe3dd810193a064f39
+tests.st.utils.utils: INFO: [2020-03-13 12:00:20.304164] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-43'
+tests.st.utils.utils: INFO:   # 16203
+tests.st.utils.utils: INFO: [2020-03-13 12:00:20.506572] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-43'
+tests.st.utils.utils: INFO:   # 6aac1a84936947c72b72f1d26cbf142c1e286a92367800fe3dd810193a064f39
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:20.691204] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=6aac1a84936947c72b72f1d26cbf142c1e286a92367800fe3dd810193a064f39 CNI_NETNS=/proc/16203/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.107/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.107/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:20.930080] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.107'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.107
+tests.st.utils.utils: INFO: [2020-03-13 12:00:21.084659] docker exec -it host1 sh -c 'docker rm -f wldw-43'
+tests.st.utils.utils: INFO:   # wldw-43
+tests.st.utils.utils: INFO: [2020-03-13 12:00:21.698236] docker exec -it host1 sh -c 'docker run -tid --name wldw-44 --net=none  workload'
+tests.st.utils.utils: INFO:   # fb82a8e8e2231f003339c62e6980d9d190f6115358b2c3a4acbf9e3f32ef37f2
+tests.st.utils.utils: INFO: [2020-03-13 12:00:22.532061] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-44'
+tests.st.utils.utils: INFO:   # 16442
+tests.st.utils.utils: INFO: [2020-03-13 12:00:22.727511] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-44'
+tests.st.utils.utils: INFO:   # fb82a8e8e2231f003339c62e6980d9d190f6115358b2c3a4acbf9e3f32ef37f2
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:22.916638] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=fb82a8e8e2231f003339c62e6980d9d190f6115358b2c3a4acbf9e3f32ef37f2 CNI_NETNS=/proc/16442/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.108/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.108/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:23.197255] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.108'
+tests.st.utils.utils: INFO:   # Successfully released IP address 192.168.46.108
+tests.st.utils.utils: INFO: [2020-03-13 12:00:23.376621] docker exec -it host1 sh -c 'docker rm -f wldw-44'
+tests.st.utils.utils: INFO:   # wldw-44
+tests.st.utils.utils: INFO: [2020-03-13 12:00:24.091875] docker exec -it host1 sh -c 'docker run -tid --name wldw-45 --net=none  workload'
+tests.st.utils.utils: INFO:   # 75171b2b1739129d8f5136d28fb174edeb2c9ccbeed2a2ecd207328147212d8f
+tests.st.utils.utils: INFO: [2020-03-13 12:00:25.116572] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.State.Pid}}'"'"' wldw-45'
+tests.st.utils.utils: INFO:   # 16685
+tests.st.utils.utils: INFO: [2020-03-13 12:00:25.330281] docker exec -it host1 sh -c 'docker inspect --format '"'"'{{.Id}}'"'"' wldw-45'
+tests.st.utils.utils: INFO:   # 75171b2b1739129d8f5136d28fb174edeb2c9ccbeed2a2ecd207328147212d8f
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:25.520639] docker exec -it host1 sh -c 'echo '"'"'{"name":"testnet1","type":"calico-cni-plugin","etcd_endpoints":"http://9.30.214.207:2379","args":{"org.apache.mesos":{"network_info":{"labels":{"labels":[]}}}},"ipam":{"type":"calico-ipam-plugin"}}'"'"' | CNI_COMMAND=ADD CNI_CONTAINERID=75171b2b1739129d8f5136d28fb174edeb2c9ccbeed2a2ecd207328147212d8f CNI_NETNS=/proc/16685/ns/net CNI_IFNAME=eth0 CNI_PATH=/code/dist /code/dist/calico-cni-plugin'
+tests.st.utils.utils: INFO:   # {
+tests.st.utils.utils: INFO:   #     "cniVersion": "0.2.0",
+tests.st.utils.utils: INFO:   #     "ip4": {
+tests.st.utils.utils: INFO:   #         "ip": "192.168.46.109/32"
+tests.st.utils.utils: INFO:   #     },
+tests.st.utils.utils: INFO:   #     "dns": {}
+tests.st.utils.utils: INFO:   # }
+tests.st.utils.workload: DEBUG: JSON text from Calico CNI = {    "cniVersion": "0.2.0",    "ip4": {        "ip": "192.168.46.109/32"    },    "dns": {}}
+tests.st.utils.utils: DEBUG: Got local IP from MY_IP=9.30.214.207
+tests.st.utils.utils: INFO: [2020-03-13 12:00:25.741485] docker exec -it host1 sh -c 'export ETCD_ENDPOINTS=http://9.30.214.207:2379; export ETCD_CA_CERT_FILE=; export ETCD_CERT_FILE=; export ETCD_KEY_FILE=; /code/dist/calicoctl ipam release --ip=192.168.46.109'
+tests.st.utils.utils: INFO:   # Return code: 126
+tests.st.utils.utils: INFO:   # OCI runtime exec failed: exec failed: container_linux.go:348: starting container process caused "process_linux.go:90: adding pid 10937 to cgroups caused \"failed to write 10937 to cgroup.procs: write /sys/fs/cgroup/cpu,cpuacct/docker/5309dcc5485b492231c4c1c10b163e295fcccd134e771eefb1e0620d4c5df5ff/cgroup.procs: invalid argument\"": unknown
+tests.st.utils.utils: INFO:   # 
+--------------------- >> end captured logging << ---------------------
+
+----------------------------------------------------------------------
+XML: /code/report/nosetests.xml
+[success] 4.50% tests.st.ipam.test_ipam.MultiHostIpam.test_pool_wrap_1: [31m164.2904s[0m
+[success] 3.90% tests.st.bgp.test_route_reflector_cluster.TestRouteReflectorCluster.test_bird_route_reflector_cluster: [31m142.4846s[0m
+[success] 3.22% tests.st.bgp.test_ipip.TestIPIP.test_gce_rr_0: [31m117.7397s[0m
+[success] 3.13% tests.st.bgp.test_ipip.TestIPIP.test_gce_rr_1: [31m114.4587s[0m
+[error] 3.08% tests.st.ipam.test_ipam.MultiHostIpam.test_pool_wrap_0: [31m112.4127s[0m
+[success] 3.04% tests.st.policy.test_profile.MultiHostMainline.test_rules_source_ip_sets: [31m111.1011s[0m
+[success] 2.79% tests.st.policy.test_profile.MultiHostMainline.test_tags: [31m101.9933s[0m
+[success] 2.78% tests.st.bgp.test_ipip.TestIPIP.test_issue_1584_0_bird: [31m101.5662s[0m
+[success] 2.70% tests.st.bgp.test_ipip.TestIPIP.test_gce_0: [31m98.5385s[0m
+[success] 2.62% tests.st.policy.test_profile.MultiHostMainline.test_rules_tcp_port: [31m95.8577s[0m
+[success] 2.61% tests.st.policy.test_profile.MultiHostMainline.test_rules_source_ip_nets_2: [31m95.2125s[0m
+[success] 2.61% tests.st.policy.test_profile.MultiHostMainline.test_rules_udp_port: [31m95.1375s[0m
+[success] 2.60% tests.st.bgp.test_ipip.TestIPIP.test_gce_1: [31m95.1001s[0m
+[success] 2.55% tests.st.calicoctl.test_autodetection.TestAutodetection.test_autodetection: [31m93.1294s[0m
+[success] 2.54% tests.st.bgp.test_route_reflector_cluster.TestRouteReflectorCluster.test_route_reflector_cluster_resilience: [31m92.8469s[0m
+[success] 2.39% tests.st.policy.test_profile.MultiHostMainline.test_rules_source_ip_nets: [31m87.1615s[0m
+[success] 2.30% tests.st.policy.test_profile.MultiHostMainline.test_rules_selector: [31m83.8294s[0m
+[success] 2.25% tests.st.bgp.test_internal_route_reflector.TestInternalRouteReflector.test_bird_internal_route_reflector_default_as: [31m82.1703s[0m
+[success] 2.09% tests.st.policy.test_profile.MultiHostMainline.test_rules_dest_ip_nets: [31m76.4981s[0m
+[success] 2.06% tests.st.bgp.test_internal_route_reflector.TestInternalRouteReflector.test_bird_internal_route_reflector: [31m75.2695s[0m
+[success] 2.04% tests.st.policy.test_profile.MultiHostMainline.test_rules_ip_net: [31m74.5163s[0m
+[success] 2.01% tests.st.policy.test_profile.MultiHostMainline.test_rules_ip_addr: [31m73.2353s[0m
+[success] 2.00% tests.st.bgp.test_single_route_reflector.TestSingleRouteReflector.test_bird_single_route_reflector_default_as: [31m73.0285s[0m
+[success] 1.98% tests.st.bgp.test_single_route_reflector.TestSingleRouteReflector.test_bird_single_route_reflector: [31m72.1682s[0m
+[success] 1.96% tests.st.bgp.test_ipip.TestIPIP.test_ipip_0_bird: [31m71.6866s[0m
+[success] 1.93% tests.st.policy.test_profile.MultiHostMainline.test_rules_protocol_icmp: [31m70.5255s[0m
+[success] 1.44% tests.st.ipam.test_ipam.MultiHostIpam.test_ipam_show: [31m52.6251s[0m
+[success] 1.42% tests.st.bgp.test_bgp.TestReadiness.test_bird_readiness: [31m51.8258s[0m
+[success] 1.29% tests.st.policy.test_namespace.TestNamespace.test_allow_nsb_with_two_policy: [31m47.1275s[0m
+[success] 1.25% tests.st.bgp.test_node_peers.TestNodePeers.test_bird_node_peers: [31m45.7741s[0m
+[success] 1.25% tests.st.bgp.test_global_peers.TestGlobalPeers.test_bird_node_peers: [31m45.5876s[0m
+[success] 1.22% tests.st.bgp.test_update_ip_addr.TestUpdateIPAddress.test_update_ip_address: [31m44.3788s[0m
+[success] 1.21% tests.st.policy.test_namespace.TestNamespace.test_allow_default_with_two_policy: [31m44.1919s[0m
+[success] 1.14% tests.st.policy.test_felix_gateway.TestFelixOnGateway.test_host_endpoint_combinations: [31m41.6033s[0m
+[success] 1.11% tests.st.bgp.test_global_config.TestBGP.test_bird_as_num: [31m40.6926s[0m
+[success] 1.04% tests.st.policy.test_namespace.TestNamespace.test_global_policy: [31m37.8469s[0m
+[success] 0.88% tests.st.policy.test_namespace.TestNamespace.test_mixed_deny: [31m32.1104s[0m
+[success] 0.88% tests.st.bgp.test_bgp.TestReadiness.test_readiness_multihost: [31m32.0301s[0m
+[success] 0.81% tests.st.bgp.test_bgp.TestReadiness.test_liveness_multihost: [31m29.5995s[0m
+[success] 0.77% tests.st.policy.test_felix_gateway.TestFelixOnGateway.test_local_allow_with_forward_empty: [31m28.2720s[0m
+[success] 0.74% tests.st.policy.test_felix_gateway.TestFelixOnGateway.test_local_deny_with_lower_forward_allow: [31m26.9983s[0m
+[success] 0.73% tests.st.ipam.test_ipam.MultiHostIpam.test_pools_add: [31m26.7545s[0m
+[success] 0.66% tests.st.policy.test_felix_gateway.TestFelixOnGateway.test_local_ingress_allow_with_lower_ingress_forward_deny: [31m24.2255s[0m
+[success] 0.65% tests.st.policy.test_felix_gateway.TestFelixOnGateway.test_local_egress_allow_with_lower_egress_forward_deny: [31m23.8868s[0m
+[success] 0.62% tests.st.policy.test_namespace.TestNamespace.test_deny_default_with_two_policy: [31m22.4669s[0m
+[success] 0.61% tests.st.bgp.test_ipip.TestIPIP.test_ipip_addr_assigned: [31m22.1990s[0m
+[success] 0.56% tests.st.policy.test_felix_gateway.TestFelixOnGateway.test_local_forward_opposite_policy_0: [31m20.2739s[0m
+[success] 0.54% tests.st.policy.test_felix_gateway.TestFelixOnGateway.test_local_forward_opposite_policy_1: [31m19.6310s[0m
+[success] 0.54% tests.st.policy.test_namespace.TestNamespace.test_deny_nsa_with_two_policy: [31m19.6201s[0m
+[success] 0.52% tests.st.bgp.test_bgp.TestReadiness.test_liveness_bird6_down: [31m19.1300s[0m
+[success] 0.52% tests.st.bgp.test_bgp.TestReadiness.test_liveness_bird6_confd_down: [31m18.9813s[0m
+[success] 0.50% tests.st.bgp.test_bgp.TestReadiness.test_liveness_bird_down: [31m18.2645s[0m
+[success] 0.49% tests.st.policy.test_namespace.TestNamespace.test_deny_nsa: [31m18.0081s[0m
+[success] 0.49% tests.st.bgp.test_bgp.TestReadiness.test_liveness_bird_confd_down: [31m17.9099s[0m
+[success] 0.48% tests.st.policy.test_felix_gateway.TestFelixOnGateway.test_empty_policy_for_forward_traffic: [31m17.3885s[0m
+[success] 0.47% tests.st.bgp.test_bgp.TestReadiness.test_readiness_env_port: [31m17.1473s[0m
+[success] 0.47% tests.st.bgp.test_bgp.TestReadiness.test_readiness: [31m17.0821s[0m
+[success] 0.45% tests.st.bgp.test_bgp.TestReadiness.test_liveness: [31m16.4213s[0m
+[success] 0.44% tests.st.bgp.test_bgp.TestReadiness.test_liveness_env_port: [31m16.1001s[0m
+[success] 0.40% tests.st.bgp.test_bgp.TestReadiness.test_not_ready_with_broken_felix: [31m14.4617s[0m
+[success] 0.38% tests.st.bgp.test_bgp.TestReadiness.test_not_ready_with_no_networking_and_broken_felix: [31m13.9191s[0m
+[success] 0.36% tests.st.policy.test_felix_gateway.TestFelixOnGateway.test_default_deny_for_local_traffic: [31m13.2296s[0m
+[success] 0.26% tests.st.policy.test_namespace.TestNamespace.test_can_access_without_policy: [31m9.4486s[0m
+[success] 0.20% tests.st.policy.test_felix_gateway.TestFelixOnGateway.test_can_connect_by_default: [31m7.2496s[0m
+[success] 0.19% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_3: [31m6.9395s[0m
+[success] 0.18% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_8: [31m6.7050s[0m
+[success] 0.18% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_24: [31m6.6359s[0m
+[success] 0.18% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_13: [31m6.5779s[0m
+[success] 0.18% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_16: [31m6.5441s[0m
+[success] 0.18% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_23: [31m6.5273s[0m
+[success] 0.18% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_10: [31m6.5270s[0m
+[success] 0.18% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_11: [31m6.5096s[0m
+[success] 0.18% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_15: [31m6.5024s[0m
+[success] 0.18% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_5: [31m6.4723s[0m
+[success] 0.18% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_14: [31m6.4627s[0m
+[success] 0.18% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_4: [31m6.4324s[0m
+[success] 0.17% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_22: [31m6.2977s[0m
+[success] 0.17% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_6: [31m6.2800s[0m
+[success] 0.17% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_2: [31m6.2000s[0m
+[success] 0.17% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_20: [31m6.1752s[0m
+[success] 0.17% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_12: [31m6.0454s[0m
+[success] 0.17% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_18: [31m6.0410s[0m
+[success] 0.15% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_1: [31m5.3319s[0m
+[success] 0.14% tests.st.calicoctl.test_node_diags.TestNodeDiags.test_node_diags: [31m5.1625s[0m
+[success] 0.14% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_7: [31m5.0805s[0m
+[success] 0.14% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_17: [31m4.9962s[0m
+[success] 0.14% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_9: [31m4.9879s[0m
+[success] 0.14% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_21: [31m4.9528s[0m
+[success] 0.13% tests.st.calicoctl.test_node_status.TestNodeStatus.test_node_status: [31m4.8777s[0m
+[success] 0.13% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_19: [31m4.8763s[0m
+[success] 0.13% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_no_default_pools: [31m4.8102s[0m
+[success] 0.08% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_0: [33m2.9186s[0m
+[success] 0.02% tests.st.bgp.test_global_config.TestBGP.test_defaults: [32m0.7738s[0m
+[success] 0.01% tests.st.calicoctl.test_node_run.TestNodeRun.test_node_run_dryrun: [32m0.5314s[0m
+[success] 0.01% tests.st.calicoctl.test_node_status.TestNodeStatus.test_node_status_fails: [32m0.5103s[0m
+----------------------------------------------------------------------
+Ran 104 tests in 3863.186s
+
+FAILED (SKIP=9, errors=1)
+Makefile:329: recipe for target 'st' failed
+make: *** [st] Error 1
