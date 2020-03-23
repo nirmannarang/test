@@ -265,10 +265,75 @@ else
 	exit 1
 fi
 docker tag calico/go-build:latest-s390x calico/go-build:v0.20
+
+
+##Retag v0.31 to latest-s390x for further builds
+docker rmi -f calico/go-build:latest-s390x
+printf -- "\nBuilding go-build v0.31 . . . \n"  | tee -a "$GOBUILD_LOG"
+### 4.1 Build `go-build`
+##This builds a docker image calico/go-build that is used to build other components
+##v0.34 for other calico components being felix, calicoctl, node etc.
+cd $GOPATH
+rm -rf $GOPATH/src/github.com/projectcalico/go-build
+git clone https://github.com/projectcalico/go-build $GOPATH/src/github.com/projectcalico/go-build 2>&1 | tee -a "$GOBUILD_LOG"
+cd $GOPATH/src/github.com/projectcalico/go-build
+git checkout v0.31 2>&1 | tee -a "$GOBUILD_LOG"
+
+# Modify `Dockerfile.s390x`, patching Makefile
+printf -- "\nDownloading patch for go-bild Dockerfile.s390x . . . \n"  | tee -a "$GOBUILD_LOG"
+curl  -o "Dockerfile.s390x_gobuild.diff" $PATCH_URL/Dockerfile.s390x_gobuild.diff 2>&1 | tee -a "$GOBUILD_LOG"
+printf -- "\nApplying patch to Dockerfile.s390x . . . \n"  | tee -a "$GOBUILD_LOG"
+patch Dockerfile.s390x Dockerfile.s390x_gobuild.diff 2>&1 | tee -a "$GOBUILD_LOG"
+rm -rf Dockerfile.s390x_gobuild.diff
+
+
+## Then  build `calico/go-build-s390x` image
+ARCH=s390x make image 2>&1 | tee -a "$GOBUILD_LOG"
+if grep -Fxq "Successfully tagged calico/go-build:latest-s390x" $GOBUILD_LOG
+then
+    echo "Successfully built calico/go-build" | tee -a "$GOBUILD_LOG"
+else
+    echo "go-build FAILED, Stopping further build !!! Check logs at $GOBUILD_LOG" | tee -a "$GOBUILD_LOG"
+	exit 1
+fi
+docker tag calico/go-build:latest-s390x calico/go-build:v0.31
+
+
+##Retag v0.33 to latest-s390x for further builds
+docker rmi -f calico/go-build:latest-s390x
+printf -- "\nBuilding go-build v0.33 . . . \n"  | tee -a "$GOBUILD_LOG"
+### 4.1 Build `go-build`
+##This builds a docker image calico/go-build that is used to build other components
+##v0.34 for other calico components being felix, calicoctl, node etc.
+cd $GOPATH
+rm -rf $GOPATH/src/github.com/projectcalico/go-build
+git clone https://github.com/projectcalico/go-build $GOPATH/src/github.com/projectcalico/go-build 2>&1 | tee -a "$GOBUILD_LOG"
+cd $GOPATH/src/github.com/projectcalico/go-build
+git checkout v0.33 2>&1 | tee -a "$GOBUILD_LOG"
+
+# Modify `Dockerfile.s390x`, patching Makefile
+printf -- "\nDownloading patch for go-bild Dockerfile.s390x . . . \n"  | tee -a "$GOBUILD_LOG"
+curl  -o "Dockerfile.s390x_gobuild.diff" $PATCH_URL/Dockerfile.s390x_gobuild.diff 2>&1 | tee -a "$GOBUILD_LOG"
+printf -- "\nApplying patch to Dockerfile.s390x . . . \n"  | tee -a "$GOBUILD_LOG"
+patch Dockerfile.s390x Dockerfile.s390x_gobuild.diff 2>&1 | tee -a "$GOBUILD_LOG"
+rm -rf Dockerfile.s390x_gobuild.diff
+
+
+## Then  build `calico/go-build-s390x` image
+ARCH=s390x make image 2>&1 | tee -a "$GOBUILD_LOG"
+if grep -Fxq "Successfully tagged calico/go-build:latest-s390x" $GOBUILD_LOG
+then
+    echo "Successfully built calico/go-build" | tee -a "$GOBUILD_LOG"
+else
+    echo "go-build FAILED, Stopping further build !!! Check logs at $GOBUILD_LOG" | tee -a "$GOBUILD_LOG"
+	exit 1
+fi
+
+docker tag calico/go-build:latest-s390x calico/go-build:v0.33
+
+
 ##Retag v0.34 to latest-s390x for further builds
 docker rmi -f calico/go-build:latest-s390x
-
-
 printf -- "\nBuilding go-build v0.34 . . . \n"  | tee -a "$GOBUILD_LOG"
 ### 4.1 Build `go-build`
 ##This builds a docker image calico/go-build that is used to build other components
@@ -297,9 +362,7 @@ else
 	exit 1
 fi
 docker tag calico/go-build:latest-s390x calico/go-build:latest
-docker tag calico/go-build:latest-s390x calico/go-build:v0.31
 docker tag calico/go-build:latest-s390x calico/go-build:v0.34
-docker tag calico/go-build:latest-s390x calico/go-build:v0.33
 
 
 docker pull calico/bird:v0.3.3-151-g767b5389-s390x
