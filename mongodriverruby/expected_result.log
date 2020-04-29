@@ -1,0 +1,4 @@
+{"_id"=>BSON::'_id', "company"=>"IBM", "project"=>"MongoDB Driver", "language"=>"Ruby", "version"=>"2.12.1"}
+{"_id"=>1, "line"=>1}
+{"_id"=>2, "line"=>2}
+{"_id"=>3, "line"=>3}
