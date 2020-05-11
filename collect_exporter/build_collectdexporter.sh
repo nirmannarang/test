@@ -73,7 +73,7 @@ function configureAndInstall() {
 	
 	#Install go
 	cd $SOURCE_ROOT
-	wget -q https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Go/1.13/build_go.sh
+	wget -q https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Go/1.14.2/build_go.sh
 	bash build_go.sh -y 
 	
 
