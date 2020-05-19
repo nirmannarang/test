@@ -1,0 +1,368 @@
+# HELP collectd_cpu_total Collectd exporter: 'cpu' Type: 'cpu' Dstype: 'api.Derive' Dsname: 'value'
+# TYPE collectd_cpu_total counter
+collectd_cpu_total{cpu="0",instance="9e2b9d600403",type="idle"} 3.43611837e+08
+collectd_cpu_total{cpu="0",instance="9e2b9d600403",type="interrupt"} 505232
+collectd_cpu_total{cpu="0",instance="9e2b9d600403",type="nice"} 126
+collectd_cpu_total{cpu="0",instance="9e2b9d600403",type="softirq"} 1.292545e+06
+collectd_cpu_total{cpu="0",instance="9e2b9d600403",type="steal"} 1.328323e+06
+collectd_cpu_total{cpu="0",instance="9e2b9d600403",type="system"} 1.548265e+06
+collectd_cpu_total{cpu="0",instance="9e2b9d600403",type="user"} 4.928304e+06
+collectd_cpu_total{cpu="0",instance="9e2b9d600403",type="wait"} 317796
+collectd_cpu_total{cpu="1",instance="9e2b9d600403",type="idle"} 3.4448111e+08
+collectd_cpu_total{cpu="1",instance="9e2b9d600403",type="interrupt"} 92948
+collectd_cpu_total{cpu="1",instance="9e2b9d600403",type="nice"} 6428
+collectd_cpu_total{cpu="1",instance="9e2b9d600403",type="softirq"} 87990
+collectd_cpu_total{cpu="1",instance="9e2b9d600403",type="steal"} 675001
+collectd_cpu_total{cpu="1",instance="9e2b9d600403",type="system"} 1.213464e+06
+collectd_cpu_total{cpu="1",instance="9e2b9d600403",type="user"} 6.640911e+06
+collectd_cpu_total{cpu="1",instance="9e2b9d600403",type="wait"} 334622
+collectd_cpu_total{cpu="2",instance="9e2b9d600403",type="idle"} 3.44126313e+08
+collectd_cpu_total{cpu="2",instance="9e2b9d600403",type="interrupt"} 87923
+collectd_cpu_total{cpu="2",instance="9e2b9d600403",type="nice"} 8642
+collectd_cpu_total{cpu="2",instance="9e2b9d600403",type="softirq"} 58800
+collectd_cpu_total{cpu="2",instance="9e2b9d600403",type="steal"} 668284
+collectd_cpu_total{cpu="2",instance="9e2b9d600403",type="system"} 1.197808e+06
+collectd_cpu_total{cpu="2",instance="9e2b9d600403",type="user"} 6.935803e+06
+collectd_cpu_total{cpu="2",instance="9e2b9d600403",type="wait"} 448902
+collectd_cpu_total{cpu="3",instance="9e2b9d600403",type="idle"} 3.45084591e+08
+collectd_cpu_total{cpu="3",instance="9e2b9d600403",type="interrupt"} 86889
+collectd_cpu_total{cpu="3",instance="9e2b9d600403",type="nice"} 12639
+collectd_cpu_total{cpu="3",instance="9e2b9d600403",type="softirq"} 54932
+collectd_cpu_total{cpu="3",instance="9e2b9d600403",type="steal"} 646623
+collectd_cpu_total{cpu="3",instance="9e2b9d600403",type="system"} 1.182871e+06
+collectd_cpu_total{cpu="3",instance="9e2b9d600403",type="user"} 6.264784e+06
+collectd_cpu_total{cpu="3",instance="9e2b9d600403",type="wait"} 199148
+collectd_cpu_total{cpu="4",instance="9e2b9d600403",type="idle"} 3.44865783e+08
+collectd_cpu_total{cpu="4",instance="9e2b9d600403",type="interrupt"} 85819
+collectd_cpu_total{cpu="4",instance="9e2b9d600403",type="nice"} 15479
+collectd_cpu_total{cpu="4",instance="9e2b9d600403",type="softirq"} 54059
+collectd_cpu_total{cpu="4",instance="9e2b9d600403",type="steal"} 644365
+collectd_cpu_total{cpu="4",instance="9e2b9d600403",type="system"} 1.166766e+06
+collectd_cpu_total{cpu="4",instance="9e2b9d600403",type="user"} 6.414602e+06
+collectd_cpu_total{cpu="4",instance="9e2b9d600403",type="wait"} 285604
+collectd_cpu_total{cpu="5",instance="9e2b9d600403",type="idle"} 3.44918927e+08
+collectd_cpu_total{cpu="5",instance="9e2b9d600403",type="interrupt"} 85747
+collectd_cpu_total{cpu="5",instance="9e2b9d600403",type="nice"} 11271
+collectd_cpu_total{cpu="5",instance="9e2b9d600403",type="softirq"} 53711
+collectd_cpu_total{cpu="5",instance="9e2b9d600403",type="steal"} 642830
+collectd_cpu_total{cpu="5",instance="9e2b9d600403",type="system"} 1.164114e+06
+collectd_cpu_total{cpu="5",instance="9e2b9d600403",type="user"} 6.230551e+06
+collectd_cpu_total{cpu="5",instance="9e2b9d600403",type="wait"} 425329
+collectd_cpu_total{cpu="6",instance="9e2b9d600403",type="idle"} 3.45191483e+08
+collectd_cpu_total{cpu="6",instance="9e2b9d600403",type="interrupt"} 85750
+collectd_cpu_total{cpu="6",instance="9e2b9d600403",type="nice"} 13015
+collectd_cpu_total{cpu="6",instance="9e2b9d600403",type="softirq"} 54263
+collectd_cpu_total{cpu="6",instance="9e2b9d600403",type="steal"} 634596
+collectd_cpu_total{cpu="6",instance="9e2b9d600403",type="system"} 1.170315e+06
+collectd_cpu_total{cpu="6",instance="9e2b9d600403",type="user"} 5.95896e+06
+collectd_cpu_total{cpu="6",instance="9e2b9d600403",type="wait"} 424095
+collectd_cpu_total{cpu="7",instance="9e2b9d600403",type="idle"} 3.4522225e+08
+collectd_cpu_total{cpu="7",instance="9e2b9d600403",type="interrupt"} 84476
+collectd_cpu_total{cpu="7",instance="9e2b9d600403",type="nice"} 12037
+collectd_cpu_total{cpu="7",instance="9e2b9d600403",type="softirq"} 53142
+collectd_cpu_total{cpu="7",instance="9e2b9d600403",type="steal"} 640277
+collectd_cpu_total{cpu="7",instance="9e2b9d600403",type="system"} 1.161895e+06
+collectd_cpu_total{cpu="7",instance="9e2b9d600403",type="user"} 6.169099e+06
+collectd_cpu_total{cpu="7",instance="9e2b9d600403",type="wait"} 189304
+# HELP collectd_df_df_complex Collectd exporter: 'df' Type: 'df_complex' Dstype: 'api.Gauge' Dsname: 'value'
+# TYPE collectd_df_df_complex gauge
+collectd_df_df_complex{df="etc-hostname",instance="9e2b9d600403",type="free"} 1.76025632768e+11
+collectd_df_df_complex{df="etc-hostname",instance="9e2b9d600403",type="reserved"} 1.343844352e+10
+collectd_df_df_complex{df="etc-hostname",instance="9e2b9d600403",type="used"} 7.3682825216e+10
+collectd_df_df_complex{df="etc-hosts",instance="9e2b9d600403",type="free"} 1.76025632768e+11
+collectd_df_df_complex{df="etc-hosts",instance="9e2b9d600403",type="reserved"} 1.343844352e+10
+collectd_df_df_complex{df="etc-hosts",instance="9e2b9d600403",type="used"} 7.3682825216e+10
+collectd_df_df_complex{df="etc-resolv.conf",instance="9e2b9d600403",type="free"} 1.76025632768e+11
+collectd_df_df_complex{df="etc-resolv.conf",instance="9e2b9d600403",type="reserved"} 1.343844352e+10
+collectd_df_df_complex{df="etc-resolv.conf",instance="9e2b9d600403",type="used"} 7.3682825216e+10
+collectd_df_df_complex{df="root",instance="9e2b9d600403",type="free"} 1.76025632768e+11
+collectd_df_df_complex{df="root",instance="9e2b9d600403",type="reserved"} 1.343844352e+10
+collectd_df_df_complex{df="root",instance="9e2b9d600403",type="used"} 7.3682825216e+10
+# HELP collectd_disk_disk_io_time_0_total Collectd exporter: 'disk' Type: 'disk_io_time' Dstype: 'api.Derive' Dsname: '0'
+# TYPE collectd_disk_disk_io_time_0_total counter
+collectd_disk_disk_io_time_0_total{disk="vda1",instance="9e2b9d600403"} 1.761032e+07
+# HELP collectd_disk_disk_io_time_1_total Collectd exporter: 'disk' Type: 'disk_io_time' Dstype: 'api.Derive' Dsname: '1'
+# TYPE collectd_disk_disk_io_time_1_total counter
+collectd_disk_disk_io_time_1_total{disk="vda1",instance="9e2b9d600403"} 1.943094e+08
+# HELP collectd_disk_disk_io_time_io_time_total Collectd exporter: 'disk' Type: 'disk_io_time' Dstype: 'api.Derive' Dsname: 'io_time'
+# TYPE collectd_disk_disk_io_time_io_time_total counter
+collectd_disk_disk_io_time_io_time_total{disk="vda",instance="9e2b9d600403"} 1.730828e+07
+# HELP collectd_disk_disk_io_time_weighted_io_time_total Collectd exporter: 'disk' Type: 'disk_io_time' Dstype: 'api.Derive' Dsname: 'weighted_io_time'
+# TYPE collectd_disk_disk_io_time_weighted_io_time_total counter
+collectd_disk_disk_io_time_weighted_io_time_total{disk="vda",instance="9e2b9d600403"} 1.9411243e+08
+# HELP collectd_disk_disk_merged_0_total Collectd exporter: 'disk' Type: 'disk_merged' Dstype: 'api.Derive' Dsname: '0'
+# TYPE collectd_disk_disk_merged_0_total counter
+collectd_disk_disk_merged_0_total{disk="vda1",instance="9e2b9d600403"} 3.029345e+06
+# HELP collectd_disk_disk_merged_1_total Collectd exporter: 'disk' Type: 'disk_merged' Dstype: 'api.Derive' Dsname: '1'
+# TYPE collectd_disk_disk_merged_1_total counter
+collectd_disk_disk_merged_1_total{disk="vda1",instance="9e2b9d600403"} 3.154788e+07
+# HELP collectd_disk_disk_merged_read_total Collectd exporter: 'disk' Type: 'disk_merged' Dstype: 'api.Derive' Dsname: 'read'
+# TYPE collectd_disk_disk_merged_read_total counter
+collectd_disk_disk_merged_read_total{disk="vda",instance="9e2b9d600403"} 3.029345e+06
+# HELP collectd_disk_disk_merged_write_total Collectd exporter: 'disk' Type: 'disk_merged' Dstype: 'api.Derive' Dsname: 'write'
+# TYPE collectd_disk_disk_merged_write_total counter
+collectd_disk_disk_merged_write_total{disk="vda",instance="9e2b9d600403"} 3.154788e+07
+# HELP collectd_disk_disk_octets_0_total Collectd exporter: 'disk' Type: 'disk_octets' Dstype: 'api.Derive' Dsname: '0'
+# TYPE collectd_disk_disk_octets_0_total counter
+collectd_disk_disk_octets_0_total{disk="vda",instance="9e2b9d600403"} 1.8876518912e+11
+collectd_disk_disk_octets_0_total{disk="vda1",instance="9e2b9d600403"} 1.88762031104e+11
+# HELP collectd_disk_disk_octets_1_total Collectd exporter: 'disk' Type: 'disk_octets' Dstype: 'api.Derive' Dsname: '1'
+# TYPE collectd_disk_disk_octets_1_total counter
+collectd_disk_disk_octets_1_total{disk="vda",instance="9e2b9d600403"} 1.722242420736e+12
+collectd_disk_disk_octets_1_total{disk="vda1",instance="9e2b9d600403"} 1.722242420736e+12
+# HELP collectd_disk_disk_ops_0_total Collectd exporter: 'disk' Type: 'disk_ops' Dstype: 'api.Derive' Dsname: '0'
+# TYPE collectd_disk_disk_ops_0_total counter
+collectd_disk_disk_ops_0_total{disk="vda",instance="9e2b9d600403"} 6.540983e+06
+collectd_disk_disk_ops_0_total{disk="vda1",instance="9e2b9d600403"} 6.540869e+06
+# HELP collectd_disk_disk_ops_1_total Collectd exporter: 'disk' Type: 'disk_ops' Dstype: 'api.Derive' Dsname: '1'
+# TYPE collectd_disk_disk_ops_1_total counter
+collectd_disk_disk_ops_1_total{disk="vda",instance="9e2b9d600403"} 2.1296336e+07
+collectd_disk_disk_ops_1_total{disk="vda1",instance="9e2b9d600403"} 2.0230685e+07
+# HELP collectd_disk_disk_time_0_total Collectd exporter: 'disk' Type: 'disk_time' Dstype: 'api.Derive' Dsname: '0'
+# TYPE collectd_disk_disk_time_0_total counter
+collectd_disk_disk_time_0_total{disk="vda",instance="9e2b9d600403"} 494
+collectd_disk_disk_time_0_total{disk="vda1",instance="9e2b9d600403"} 494
+# HELP collectd_disk_disk_time_1_total Collectd exporter: 'disk' Type: 'disk_time' Dstype: 'api.Derive' Dsname: '1'
+# TYPE collectd_disk_disk_time_1_total counter
+collectd_disk_disk_time_1_total{disk="vda",instance="9e2b9d600403"} 3852
+collectd_disk_disk_time_1_total{disk="vda1",instance="9e2b9d600403"} 3863
+# HELP collectd_disk_pending_operations Collectd exporter: 'disk' Type: 'pending_operations' Dstype: 'api.Gauge' Dsname: 'value'
+# TYPE collectd_disk_pending_operations gauge
+collectd_disk_pending_operations{disk="vda",instance="9e2b9d600403"} 0
+collectd_disk_pending_operations{disk="vda1",instance="9e2b9d600403"} 0
+# HELP collectd_entropy Collectd exporter: 'entropy' Type: 'entropy' Dstype: 'api.Gauge' Dsname: 'value'
+# TYPE collectd_entropy gauge
+collectd_entropy{instance="9e2b9d600403"} 3754
+# HELP collectd_exporter_build_info A metric with a constant '1' value labeled by version, revision, branch, and goversion from which collectd_exporter was built.
+# TYPE collectd_exporter_build_info gauge
+collectd_exporter_build_info{branch="",goversion="go1.14.2",revision="",version=""} 1
+# HELP collectd_interface_if_errors_0_total Collectd exporter: 'interface' Type: 'if_errors' Dstype: 'api.Derive' Dsname: '0'
+# TYPE collectd_interface_if_errors_0_total counter
+collectd_interface_if_errors_0_total{instance="9e2b9d600403",interface="eth0"} 0
+# HELP collectd_interface_if_errors_1_total Collectd exporter: 'interface' Type: 'if_errors' Dstype: 'api.Derive' Dsname: '1'
+# TYPE collectd_interface_if_errors_1_total counter
+collectd_interface_if_errors_1_total{instance="9e2b9d600403",interface="eth0"} 0
+# HELP collectd_interface_if_errors_rx_total Collectd exporter: 'interface' Type: 'if_errors' Dstype: 'api.Derive' Dsname: 'rx'
+# TYPE collectd_interface_if_errors_rx_total counter
+collectd_interface_if_errors_rx_total{instance="9e2b9d600403",interface="lo"} 0
+# HELP collectd_interface_if_errors_tx_total Collectd exporter: 'interface' Type: 'if_errors' Dstype: 'api.Derive' Dsname: 'tx'
+# TYPE collectd_interface_if_errors_tx_total counter
+collectd_interface_if_errors_tx_total{instance="9e2b9d600403",interface="lo"} 0
+# HELP collectd_interface_if_octets_rx_total Collectd exporter: 'interface' Type: 'if_octets' Dstype: 'api.Derive' Dsname: 'rx'
+# TYPE collectd_interface_if_octets_rx_total counter
+collectd_interface_if_octets_rx_total{instance="9e2b9d600403",interface="eth0"} 2.15134719e+08
+collectd_interface_if_octets_rx_total{instance="9e2b9d600403",interface="lo"} 855179
+# HELP collectd_interface_if_octets_tx_total Collectd exporter: 'interface' Type: 'if_octets' Dstype: 'api.Derive' Dsname: 'tx'
+# TYPE collectd_interface_if_octets_tx_total counter
+collectd_interface_if_octets_tx_total{instance="9e2b9d600403",interface="eth0"} 1.478393e+06
+collectd_interface_if_octets_tx_total{instance="9e2b9d600403",interface="lo"} 855179
+# HELP collectd_interface_if_packets_0_total Collectd exporter: 'interface' Type: 'if_packets' Dstype: 'api.Derive' Dsname: '0'
+# TYPE collectd_interface_if_packets_0_total counter
+collectd_interface_if_packets_0_total{instance="9e2b9d600403",interface="eth0"} 40912
+# HELP collectd_interface_if_packets_1_total Collectd exporter: 'interface' Type: 'if_packets' Dstype: 'api.Derive' Dsname: '1'
+# TYPE collectd_interface_if_packets_1_total counter
+collectd_interface_if_packets_1_total{instance="9e2b9d600403",interface="eth0"} 23655
+# HELP collectd_interface_if_packets_rx_total Collectd exporter: 'interface' Type: 'if_packets' Dstype: 'api.Derive' Dsname: 'rx'
+# TYPE collectd_interface_if_packets_rx_total counter
+collectd_interface_if_packets_rx_total{instance="9e2b9d600403",interface="lo"} 909
+# HELP collectd_interface_if_packets_tx_total Collectd exporter: 'interface' Type: 'if_packets' Dstype: 'api.Derive' Dsname: 'tx'
+# TYPE collectd_interface_if_packets_tx_total counter
+collectd_interface_if_packets_tx_total{instance="9e2b9d600403",interface="lo"} 909
+# HELP collectd_irq_total Collectd exporter: 'irq' Type: 'irq' Dstype: 'api.Derive' Dsname: 'value'
+# TYPE collectd_irq_total counter
+collectd_irq_total{instance="9e2b9d600403",irq="ADM"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="AIO"} 1.815201775e+09
+collectd_irq_total{instance="9e2b9d600403",irq="APB"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="C15"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="C70"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="CIO"} 10
+collectd_irq_total{instance="9e2b9d600403",irq="CLK"} 1.218773029e+09
+collectd_irq_total{instance="9e2b9d600403",irq="CMC"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="CMS"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="CSC"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="CTC"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="DAS"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="DSD"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="EMS"} 8.72704149e+08
+collectd_irq_total{instance="9e2b9d600403",irq="EXC"} 3.90106569e+08
+collectd_irq_total{instance="9e2b9d600403",irq="EXT"} 2.481584386e+09
+collectd_irq_total{instance="9e2b9d600403",irq="FTP"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="IUC"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="I_O"} 157
+collectd_irq_total{instance="9e2b9d600403",irq="LCS"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="MSI"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="NMI"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="PCI"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="PFL"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="QAI"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="RST"} 7
+collectd_irq_total{instance="9e2b9d600403",irq="SCP"} 639
+collectd_irq_total{instance="9e2b9d600403",irq="TAL"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="TAP"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="TMR"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="VAI"} 1.815201775e+09
+collectd_irq_total{instance="9e2b9d600403",irq="VIR"} 147
+collectd_irq_total{instance="9e2b9d600403",irq="VMR"} 0
+collectd_irq_total{instance="9e2b9d600403",irq="VRT"} 0
+# HELP collectd_last_push_timestamp_seconds Unix timestamp of the last received collectd metrics push in seconds.
+# TYPE collectd_last_push_timestamp_seconds gauge
+collectd_last_push_timestamp_seconds 1.5898868845116265e+09
+# HELP collectd_load_0 Collectd exporter: 'load' Type: 'load' Dstype: 'api.Gauge' Dsname: '0'
+# TYPE collectd_load_0 gauge
+collectd_load_0{instance="9e2b9d600403"} 1.59
+# HELP collectd_load_1 Collectd exporter: 'load' Type: 'load' Dstype: 'api.Gauge' Dsname: '1'
+# TYPE collectd_load_1 gauge
+collectd_load_1{instance="9e2b9d600403"} 1.26
+# HELP collectd_load_2 Collectd exporter: 'load' Type: 'load' Dstype: 'api.Gauge' Dsname: '2'
+# TYPE collectd_load_2 gauge
+collectd_load_2{instance="9e2b9d600403"} 1.15
+# HELP collectd_memory Collectd exporter: 'memory' Type: 'memory' Dstype: 'api.Gauge' Dsname: 'value'
+# TYPE collectd_memory gauge
+collectd_memory{instance="9e2b9d600403",memory="buffered"} 1.28401408e+08
+collectd_memory{instance="9e2b9d600403",memory="cached"} 1.1389517824e+10
+collectd_memory{instance="9e2b9d600403",memory="free"} 3.744260096e+09
+collectd_memory{instance="9e2b9d600403",memory="slab_recl"} 5.09587456e+08
+collectd_memory{instance="9e2b9d600403",memory="slab_unrecl"} 1.40668928e+08
+collectd_memory{instance="9e2b9d600403",memory="used"} 7.73951488e+08
+# HELP collectd_processes_fork_rate_total Collectd exporter: 'processes' Type: 'fork_rate' Dstype: 'api.Derive' Dsname: 'value'
+# TYPE collectd_processes_fork_rate_total counter
+collectd_processes_fork_rate_total{instance="9e2b9d600403"} 2.6425801e+07
+# HELP collectd_processes_ps_state Collectd exporter: 'processes' Type: 'ps_state' Dstype: 'api.Gauge' Dsname: 'value'
+# TYPE collectd_processes_ps_state gauge
+collectd_processes_ps_state{instance="9e2b9d600403",processes="blocked"} 0
+collectd_processes_ps_state{instance="9e2b9d600403",processes="paging"} 0
+collectd_processes_ps_state{instance="9e2b9d600403",processes="running"} 0
+collectd_processes_ps_state{instance="9e2b9d600403",processes="sleeping"} 7
+collectd_processes_ps_state{instance="9e2b9d600403",processes="stopped"} 0
+collectd_processes_ps_state{instance="9e2b9d600403",processes="zombies"} 0
+# HELP collectd_swap Collectd exporter: 'swap' Type: 'swap' Dstype: 'api.Gauge' Dsname: 'value'
+# TYPE collectd_swap gauge
+collectd_swap{instance="9e2b9d600403",swap="cached"} 1.204224e+06
+collectd_swap{instance="9e2b9d600403",swap="free"} 2.129915904e+09
+collectd_swap{instance="9e2b9d600403",swap="used"} 1.6359424e+07
+# HELP collectd_swap_swap_io_total Collectd exporter: 'swap' Type: 'swap_io' Dstype: 'api.Derive' Dsname: 'value'
+# TYPE collectd_swap_swap_io_total counter
+collectd_swap_swap_io_total{instance="9e2b9d600403",swap="in"} 10416
+collectd_swap_swap_io_total{instance="9e2b9d600403",swap="out"} 202015
+# HELP collectd_users Collectd exporter: 'users' Type: 'users' Dstype: 'api.Gauge' Dsname: 'value'
+# TYPE collectd_users gauge
+collectd_users{instance="9e2b9d600403"} 1
+# HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.
+# TYPE go_gc_duration_seconds summary
+go_gc_duration_seconds{quantile="0"} 2.1149e-05
+go_gc_duration_seconds{quantile="0.25"} 2.8158e-05
+go_gc_duration_seconds{quantile="0.5"} 3.4427e-05
+go_gc_duration_seconds{quantile="0.75"} 0.000288639
+go_gc_duration_seconds{quantile="1"} 0.000288639
+go_gc_duration_seconds_sum 0.000372373
+go_gc_duration_seconds_count 4
+# HELP go_goroutines Number of goroutines that currently exist.
+# TYPE go_goroutines gauge
+go_goroutines 13
+# HELP go_info Information about the Go environment.
+# TYPE go_info gauge
+go_info{version="go1.14.2"} 1
+# HELP go_memstats_alloc_bytes Number of bytes allocated and still in use.
+# TYPE go_memstats_alloc_bytes gauge
+go_memstats_alloc_bytes 3.251296e+06
+# HELP go_memstats_alloc_bytes_total Total number of bytes allocated, even if freed.
+# TYPE go_memstats_alloc_bytes_total counter
+go_memstats_alloc_bytes_total 1.1808056e+07
+# HELP go_memstats_buck_hash_sys_bytes Number of bytes used by the profiling bucket hash table.
+# TYPE go_memstats_buck_hash_sys_bytes gauge
+go_memstats_buck_hash_sys_bytes 1.447922e+06
+# HELP go_memstats_frees_total Total number of frees.
+# TYPE go_memstats_frees_total counter
+go_memstats_frees_total 123115
+# HELP go_memstats_gc_cpu_fraction The fraction of this program's available CPU time used by the GC since the program started.
+# TYPE go_memstats_gc_cpu_fraction gauge
+go_memstats_gc_cpu_fraction 5.315623102373817e-06
+# HELP go_memstats_gc_sys_bytes Number of bytes used for garbage collection system metadata.
+# TYPE go_memstats_gc_sys_bytes gauge
+go_memstats_gc_sys_bytes 3.574024e+06
+# HELP go_memstats_heap_alloc_bytes Number of heap bytes allocated and still in use.
+# TYPE go_memstats_heap_alloc_bytes gauge
+go_memstats_heap_alloc_bytes 3.251296e+06
+# HELP go_memstats_heap_idle_bytes Number of heap bytes waiting to be used.
+# TYPE go_memstats_heap_idle_bytes gauge
+go_memstats_heap_idle_bytes 6.1923328e+07
+# HELP go_memstats_heap_inuse_bytes Number of heap bytes that are in use.
+# TYPE go_memstats_heap_inuse_bytes gauge
+go_memstats_heap_inuse_bytes 4.530176e+06
+# HELP go_memstats_heap_objects Number of allocated objects.
+# TYPE go_memstats_heap_objects gauge
+go_memstats_heap_objects 16204
+# HELP go_memstats_heap_released_bytes Number of heap bytes released to OS.
+# TYPE go_memstats_heap_released_bytes gauge
+go_memstats_heap_released_bytes 6.131712e+07
+# HELP go_memstats_heap_sys_bytes Number of heap bytes obtained from system.
+# TYPE go_memstats_heap_sys_bytes gauge
+go_memstats_heap_sys_bytes 6.6453504e+07
+# HELP go_memstats_last_gc_time_seconds Number of seconds since 1970 of last garbage collection.
+# TYPE go_memstats_last_gc_time_seconds gauge
+go_memstats_last_gc_time_seconds 1.5898868723627608e+09
+# HELP go_memstats_lookups_total Total number of pointer lookups.
+# TYPE go_memstats_lookups_total counter
+go_memstats_lookups_total 0
+# HELP go_memstats_mallocs_total Total number of mallocs.
+# TYPE go_memstats_mallocs_total counter
+go_memstats_mallocs_total 139319
+# HELP go_memstats_mcache_inuse_bytes Number of bytes in use by mcache structures.
+# TYPE go_memstats_mcache_inuse_bytes gauge
+go_memstats_mcache_inuse_bytes 13888
+# HELP go_memstats_mcache_sys_bytes Number of bytes used for mcache structures obtained from system.
+# TYPE go_memstats_mcache_sys_bytes gauge
+go_memstats_mcache_sys_bytes 16384
+# HELP go_memstats_mspan_inuse_bytes Number of bytes in use by mspan structures.
+# TYPE go_memstats_mspan_inuse_bytes gauge
+go_memstats_mspan_inuse_bytes 93704
+# HELP go_memstats_mspan_sys_bytes Number of bytes used for mspan structures obtained from system.
+# TYPE go_memstats_mspan_sys_bytes gauge
+go_memstats_mspan_sys_bytes 98304
+# HELP go_memstats_next_gc_bytes Number of heap bytes when next garbage collection will take place.
+# TYPE go_memstats_next_gc_bytes gauge
+go_memstats_next_gc_bytes 4.703056e+06
+# HELP go_memstats_other_sys_bytes Number of bytes used for other system allocations.
+# TYPE go_memstats_other_sys_bytes gauge
+go_memstats_other_sys_bytes 1.499142e+06
+# HELP go_memstats_stack_inuse_bytes Number of bytes in use by the stack allocator.
+# TYPE go_memstats_stack_inuse_bytes gauge
+go_memstats_stack_inuse_bytes 655360
+# HELP go_memstats_stack_sys_bytes Number of bytes obtained from system for stack allocator.
+# TYPE go_memstats_stack_sys_bytes gauge
+go_memstats_stack_sys_bytes 655360
+# HELP go_memstats_sys_bytes Number of bytes obtained from system.
+# TYPE go_memstats_sys_bytes gauge
+go_memstats_sys_bytes 7.374464e+07
+# HELP go_threads Number of OS threads created.
+# TYPE go_threads gauge
+go_threads 10
+# HELP process_cpu_seconds_total Total user and system CPU time spent in seconds.
+# TYPE process_cpu_seconds_total counter
+process_cpu_seconds_total 0.1
+# HELP process_max_fds Maximum number of open file descriptors.
+# TYPE process_max_fds gauge
+process_max_fds 1024
+# HELP process_open_fds Number of open file descriptors.
+# TYPE process_open_fds gauge
+process_open_fds 12
+# HELP process_resident_memory_bytes Resident memory size in bytes.
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes 1.6429056e+07
+# HELP process_start_time_seconds Start time of the process since unix epoch in seconds.
+# TYPE process_start_time_seconds gauge
+process_start_time_seconds 1.58988672838e+09
+# HELP process_virtual_memory_bytes Virtual memory size in bytes.
+# TYPE process_virtual_memory_bytes gauge
+process_virtual_memory_bytes 7.31840512e+08
+# HELP process_virtual_memory_max_bytes Maximum amount of virtual memory available in bytes.
+# TYPE process_virtual_memory_max_bytes gauge
+process_virtual_memory_max_bytes -1
+# HELP promhttp_metric_handler_requests_in_flight Current number of scrapes being served.
+# TYPE promhttp_metric_handler_requests_in_flight gauge
+promhttp_metric_handler_requests_in_flight 1
+# HELP promhttp_metric_handler_requests_total Total number of scrapes by HTTP status code.
+# TYPE promhttp_metric_handler_requests_total counter
+promhttp_metric_handler_requests_total{code="200"} 4
+promhttp_metric_handler_requests_total{code="500"} 0
+promhttp_metric_handler_requests_total{code="503"} 0
