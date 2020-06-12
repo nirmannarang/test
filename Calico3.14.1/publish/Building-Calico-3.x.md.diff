@@ -1,0 +1,811 @@
+--- /dev/fd/18	2020-06-01 13:38:38.000000000 -0400
++++ Building-Calico-3.x.md	2020-06-01 13:34:22.000000000 -0400
+@@ -1,511 +1,425 @@
+ # Building Calico
+ 
+-The instructions specify the steps to build `Calico` version [v3.12.0](https://docs.projectcalico.org/v3.12/release-notes/) on Linux on IBM Z  for following distributions:
++The instructions specify the steps to build `Calico` version [v3.14.1](https://docs.projectcalico.org/v3.14/release-notes/) on Linux on IBM Z  for following distributions:
+ 
+-*    RHEL (7.6, 7.7, 7.8)
+-*    SLES (12 SP4, 12SP5, 15 SP1)
+-*    Ubuntu (16.04, 18.04)
++* RHEL (7.6, 7.7, 7.8)
++* SLES (12 SP4, 12 SP5, 15 SP1)
++* Ubuntu (16.04, 18.04, 20.04)
+ 
+ _**General Notes:**_
+-* _When following the steps below please use a standard permission user unless otherwise specified._
+ 
++* _When following the steps below please use a standard permission user unless otherwise specified._
+ * _A directory `/<source_root>/` will be referred to in these instructions, this is a temporary writable directory anywhere you'd like to place it._
+-
+ * _`<host_run_etcd_ip>` and `<host-ip>` will be referred to the IP address of the host where etcd service is run._
+-
+ * _Please note that in case if any calico module build gets failed, make sure to run `make clean` before rerunning the build command._
+-
+ * _While running build or tests, errors like `Error: No such container: calico-etcd-ssl   Makefile:369: recipe for target 'stop-etcd' failed   make[1]: [stop-etcd] Error 1 (ignored)` might be seen and can be simply ignored. These are some extra checks for checking previously running containers and tries to stop and remove them in case they are already running._
+-
+ * _Docker-ce versions between 17.06 and 18.02 have a known [issue](https://github.com/docker/for-linux/issues/238) on IBM Z. This has been fixed in version 18.03, refer to docker release [link](https://github.com/docker/docker-ce/releases) for most up to date information on which another version might contain this fix._
+-
+ * You may need to manage docker as a non-root user in order to build Calico. See [here](https://docs.docker.com/install/linux/linux-postinstall/) for instructions if needed.
+-
+ * Export Environment Variable
+-  ```shell
+-  export PATCH_URL=https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Calico/3.12.0/patch
++
++  ```bash
++  export PATCH_URL=https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Calico/3.14.1/patch
+   ```
+ 
+-### Building Calico
+-### 1. Build using script
++## 1. Build using script
+ 
+ If you want to build Calico using manual steps, go to STEP 2.
+ 
+ Use the following commands to build Calico using the build [script](https://github.com/linux-on-ibm-z/scripts/tree/master/Calico). Please make sure you have wget and Docker installed.
+-    
+-```
+-wget https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Calico/3.12.0/build_Calico.sh
++
++```bash
++wget https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Calico/3.14.1/build_calico.sh
+ 
+ # Build Calico
+-bash build_Calico.sh   [Provide -t option for executing build with tests]
++bash build_calico.sh   [Provide -t option for executing build with tests]
++```
+ 
+-```	
+-	
+-If the build and tests complete successfully, go to STEP 6. In case of error, check logs at `$HOME/Calico_v3.12.0/logs/` for more details or go to STEP 2 to follow manual build steps.
++If the build and tests complete successfully, go to STEP 6. In case of error, check logs at `$HOME/Calico_v3.14.1/logs/` for more details or go to STEP 2 to follow manual build steps.
+ 
+ In case build is successful but tests fail, run the following command to set Calico environment and go to STEP 4.8
+-```
+-source $HOME/setenv.sh	#Source environment file
++
++```bash
++source $HOME/setenv.sh    #Source environment file
+ ```
+ 
+-### 2. Install the system dependencies
++## 2. Install the system dependencies
+ 
+ * RHEL (7.6, 7.7, 7.8)
+-  ```shell
++
++  ```bash
+   sudo yum install -y curl git wget tar gcc glibc-static.s390x make which patch
+   ```
+ 
+ * SLES (12 SP4, 12 SP5, 15 SP1)
+-  ```shell
++
++  ```bash
+   sudo zypper install -y curl git wget tar gcc glibc-devel-static make which patch
+   ```
+- 
+-* Ubuntu (16.04, 18.04)
+-  ```shell
++
++* Ubuntu (16.04, 18.04, 20.04)
++
++  ```bash
+   sudo apt-get update
+   sudo apt-get install -y patch git curl tar gcc wget make
+   ```
+ 
+-* Docker packages are provided for SLES, Ubuntu and RHEL (7.5 or higher) in their respective repositories. Instructions for installing Docker on RHEL(7.3) can be found [here](http://www.ibm.com/developerworks/linux/linux390/docker.html). You may use the same instructions for RHEL (7.6, 7.7, 7.8) as the binaries are expected to be compatible. More information about Docker CE can be found [here](https://docs.docker.com/install/).
++* Docker packages are provided for SLES, Ubuntu and RHEL (7.6 or higher) in their respective repositories. Instructions for installing Docker on RHEL (7.3) can be found [here](http://www.ibm.com/developerworks/linux/linux390/docker.html). You may use the same instructions for RHEL (7.6, 7.7, 7.8) as the binaries are expected to be compatible. More information about Docker CE can be found [here](https://docs.docker.com/install/).
+ 
+-### 3. Install `Go` and  `etcd` as prerequisites
+-#### 3.1 Install `Go 1.11.5` -- Instructions for building Go can be found [here](https://github.com/linux-on-ibm-z/docs/wiki/Building-Go)
++## 3. Install prerequisites
++
++### 3.1 Install Go 1.14.2
++
++Instructions for building Go can be found [here](https://github.com/linux-on-ibm-z/docs/wiki/Building-Go)
+   
+-#### 3.2 Install `etcd v3.3.7`
+-  ```shell
+-  cd $SOURCE_ROOT
+-  mkdir -p $SOURCE_ROOT/src/github.com/coreos
+-  cd $SOURCE_ROOT/src/github.com/coreos
+-  git clone git://github.com/coreos/etcd
+-  cd etcd
+-  git checkout v3.3.7
+-  ```
+-  Set ``GOPATH`` and ``ETCD_DATA_DIR``
+-  ```shell
+-  cd $SOURCE_ROOT
+-  export GOPATH=$SOURCE_ROOT
+-  export PATH=$GOPATH/bin:$PATH
+-  mkdir -p $SOURCE_ROOT/etcd_temp
+-  export ETCD_DATA_DIR=$SOURCE_ROOT/etcd_temp
+-  export ETCD_UNSUPPORTED_ARCH=s390x
+-  ```
+-  Build etcd using following commands:
+-  ```shell
+-  cd $SOURCE_ROOT/src/github.com/coreos/etcd
+-  ./build
+-  ```
+-  Modify `Dockerfile-release` for s390x
+-  ```shell
+-  curl  -o "etcd-dockerfile_release.diff" $PATCH_URL/etcd-dockerfile_release.diff
+-  patch Dockerfile-release etcd-dockerfile_release.diff
+-  rm -rf etcd-dockerfile_release.diff
+-  ```
+-  Build etcd image
+-  ```shell
+-  docker build -f Dockerfile-release  -t quay.io/coreos/etcd .
+-  cd $SOURCE_ROOT/src/github.com/coreos/etcd/bin
+-  tar cvf etcd-v3.3.7-linux-s390x.tar etcd etcdctl
+-  gzip etcd-v3.3.7-linux-s390x.tar
+-  docker tag quay.io/coreos/etcd:latest quay.io/coreos/etcd:v3.3.7-s390x
+-  docker tag quay.io/coreos/etcd quay.io/coreos/etcd:v3.3.7
+-  ```
++### 3.2 Install etcd v3.3.7
+ 
++Set environment variables
+ 
++```bash
++cd $SOURCE_ROOT
++export GOPATH=$SOURCE_ROOT
++export PATH=$GOPATH/bin:$PATH
++export ETCD_UNSUPPORTED_ARCH=s390x
++```
+ 
+-### 4. Build `calicoctl` and  `calico/node` image
+-
+-#### 4.1 Build `go-build`
+-* This builds a docker image `calico/go-build` that is used to build other components
+-  * v0.20 for bpftool docker image
+-    ```shell
+-    git clone https://github.com/projectcalico/go-build $GOPATH/src/github.com/projectcalico/go-build
+-    cd $GOPATH/src/github.com/projectcalico/go-build
+-    git checkout v0.20
+-    ```
+-    Then  build `calico/go-build-s390x` image
+-    ```shell
+-    ARCH=s390x make image
+-    docker tag calico/go-build:latest-s390x calico/go-build:v0.20
+-    docker rmi -f calico/go-build:latest-s390x
+-    ```
+-  * v0.31 for other calico components being felix, calicoctl, node etc.
+-    ```shell
+-    cd $GOPATH
+-    rm -rf $GOPATH/src/github.com/projectcalico/go-build
+-    git clone https://github.com/projectcalico/go-build $GOPATH/src/github.com/projectcalico/go-build 2>&1 | tee -a "$GOBUILD_LOG"
+-    cd $GOPATH/src/github.com/projectcalico/go-build
+-    git checkout v0.31
+-    ```
+-    Modify `Dockerfile.s390x`, patching Makefile
+-    ```shell
+-    curl  -o "Dockerfile.s390x_gobuild.diff" $PATCH_URL/Dockerfile.s390x_gobuild.diff
+-    patch Dockerfile.s390x Dockerfile.s390x_gobuild.diff
+-    rm -rf Dockerfile.s390x_gobuild.diff
+-    ```
+-    Then  build `calico/go-build-s390x` image
+-    ```shell
+-    ARCH=s390x make image
+-    docker tag calico/go-build:latest-s390x calico/go-build:v0.31
+-    docker rmi -f calico/go-build:latest-s390x
+-    ```
+-  * v0.33 for other calico components being felix, calicoctl, node etc.
+-    ```shell
+-    cd $GOPATH
+-    rm -rf $GOPATH/src/github.com/projectcalico/go-build
+-    git clone https://github.com/projectcalico/go-build $GOPATH/src/github.com/projectcalico/go-build 2>&1 | tee -a "$GOBUILD_LOG"
+-    cd $GOPATH/src/github.com/projectcalico/go-build
+-    git checkout v0.33
+-    ```
+-    Modify `Dockerfile.s390x`, patching Makefile
+-    ```shell
+-    curl  -o "Dockerfile.s390x_gobuild.diff" $PATCH_URL/Dockerfile.s390x_gobuild.diff
+-    patch Dockerfile.s390x Dockerfile.s390x_gobuild.diff
+-    rm -rf Dockerfile.s390x_gobuild.diff
+-    ```
+-    Then  build `calico/go-build-s390x` image
+-    ```shell
+-    ARCH=s390x make image
+-    docker tag calico/go-build:latest-s390x calico/go-build:v0.33
+-    docker rmi -f calico/go-build:latest-s390x
+-    ```
+-  * v0.34 for other calico components being felix, calicoctl, node etc.
+-    ```shell
+-    cd $GOPATH
+-    rm -rf $GOPATH/src/github.com/projectcalico/go-build
+-    git clone https://github.com/projectcalico/go-build $GOPATH/src/github.com/projectcalico/go-build 2>&1 | tee -a "$GOBUILD_LOG"
+-    cd $GOPATH/src/github.com/projectcalico/go-build
+-    git checkout v0.34
+-    ```
+-    Modify `Dockerfile.s390x`, patching Makefile
+-    ```shell
+-    curl  -o "Dockerfile.s390x_gobuild.diff" $PATCH_URL/Dockerfile.s390x_gobuild.diff
+-    patch Dockerfile.s390x Dockerfile.s390x_gobuild.diff
+-    rm -rf Dockerfile.s390x_gobuild.diff
+-    ```
+-    Then  build `calico/go-build-s390x` image
+-    ```shell
+-    ARCH=s390x make image
+-    docker tag calico/go-build:latest-s390x calico/go-build:latest
+-    docker tag calico/go-build:latest-s390x calico/go-build:v0.34
+-    ```
+-#### 4.2 Pull Bird images
+- ```shell
+- docker pull calico/bird:v0.3.3-151-g767b5389-s390x
+- docker tag calico/bird:v0.3.3-151-g767b5389-s390x calico/bird:latest
+- docker tag calico/bird:v0.3.3-151-g767b5389-s390x  calico/bird:v0.3. 3-s390x
+- ```
++Clone the `coreos/etcd` github repository:
++
++```bash
++mkdir -p $SOURCE_ROOT/src/github.com/coreos
++cd $SOURCE_ROOT/src/github.com/coreos
++git clone -b v3.3.7 git://github.com/coreos/etcd
++cd etcd
++```
++
++Download `Dockerfile-release.s390x`:
++
++```bash
++curl -o "Dockerfile-release.s390x" $PATCH_URL/Dockerfile-release.s390x
++```
++
++Build etcd binaries and image using following commands:
++
++```bash
++./build
++BINARYDIR=./bin TAG=quay.io/coreos/etcd ./scripts/build-docker v3.3.7
++```
++
++Create tarball for calico testing.
++
++```bash
++tar -zcvf etcd-v3.3.7-linux-s390x.tar.gz -C bin etcd etcdctl
++```
++
++## 4. Build calicoctl and calico/node image
++
++### 4.1 Build bpftool image
++
++* This builds a docker image `calico/bpftool:v5.3-s390x`. Certain components require the binary provided in this image.
++
++  Clone the `projectcalico/bpftool` github repository:
+ 
+-#### 4.3 Build `calicoctl` binary and `calico/ctl` image
+-* Download the source code
+   ```bash
+-  git clone https://github.com/projectcalico/calicoctl $GOPATH/src/github.com/projectcalico/calicoctl
+-  cd $GOPATH/src/github.com/projectcalico/calicoctl
+-  git checkout v3.12.0
++  git clone https://github.com/projectcalico/bpftool $GOPATH/src/github.com/projectcalico/bpftool
++  cd $GOPATH/src/github.com/projectcalico/bpftool
+   ```
+ 
+-* Build the `calicoctl` binary and `calico/ctl` image
++  Download the `Dockerfile.s390x`.
++
+   ```bash
+-  cd $GOPATH/src/github.com/projectcalico/calicoctl
+-  ARCH=s390x make calico/ctl
++  curl -o "Dockerfile.s390x" $PATCH_URL/Dockerfile.s390x.bpftool
+   ```
+ 
+-#### 4.4 Build `Typha`
+-* Download the source code
++  Then build the `calico/bpftool:v5.3-s390x` image:
++
+   ```bash
+-  git clone https://github.com/projectcalico/typha $GOPATH/src/github.com/projectcalico/typha
+-  cd $GOPATH/src/github.com/projectcalico/typha
+-  git checkout v3.12.0
++  ARCH=s390x make image
+   ```
+ 
+-* Modify `Makefile`, patching Makefile
+-  ```shell
+-  curl  -o "Makefile-typha.diff" $PATCH_URL/Makefile-typha.diff
+-  patch Makefile Makefile-typha.diff
+-  ```
++### 4.2 Build go-build
++
++* This builds a docker image `calico/go-build:v0.39` that is used to build other components
++
++  Clone the `projectcalico/go-build` github repository.
+ 
+-* Build the binaries and docker image for typha
+   ```bash
+-  cd $GOPATH/src/github.com/projectcalico/typha
+-  ARCH=s390x make calico/typha
+-  docker tag calico/typha:latest-s390x calico/typha:master-s390x
++  git clone -b v0.39 https://github.com/projectcalico/go-build $GOPATH/src/github.com/projectcalico/go-build
++  cd $GOPATH/src/github.com/projectcalico/go-build
+   ```
+ 
+-#### 4.5 Build `felix`
++  Download the modified `Dockerfile.s390x` and patch the `Makefile`.
+ 
+-* To build `felix` it  needs `felixbackend.pb.go` that is generated by a docker image `calico/protoc`. Let's first built this image.
+-  ```shell
+-  git clone https://github.com/tigera/docker-protobuf $GOPATH/src/github.com/projectcalico/docker-protobuf
+-  cd  $GOPATH/src/github.com/projectcalico/docker-protobuf
++  ```bash
++  curl -o "Dockerfile.s390x" $PATCH_URL/Dockerfile.s390x.v0.39
++  curl -s $PATCH_URL/Makefile.diff.v0.39 | git apply -
+   ```
+ 
+-* Modify `Dockerfile-s390x`, patching the same
+-  ```shell
+-  curl  -o "protobuf_dockerfile.diff" $PATCH_URL/protobuf_dockerfile.diff
+-  patch Dockerfile-s390x protobuf_dockerfile.diff
+-  rm -rf protobuf_dockerfile.diff
+-  ```
++  Then build `calico/go-build:v0.39` image:
+ 
+-* Build and tag docker image `calico/protoc-s390x`
+-  ```shell
+-  docker build -t calico/protoc-s390x -f Dockerfile-s390x .
+-  docker tag calico/protoc-s390x:latest calico/protoc:latest-s390x
+-  docker tag calico/protoc-s390x:latest calico/protoc:v0.1-s390x
++  ```bash
++  ARCH=s390x VERSION=v0.39 ARCHIMAGE='$(DEFAULTIMAGE)' make image
+   ```
+ 
+-* To build `felix`, it  needs bpftool as a base image. Let's build this image.
+-  ```shell
+-  git clone https://github.com/projectcalico/bpftool $GOPATH/src/github.com/projectcalico/bpftool 2>&1 | tee -a "$BPFTOOL_LOG"
+-  cd $GOPATH/src/github.com/projectcalico/bpftool
+-  git checkout d60ea59f70b85777ea859f08135569cdd09ce784
+-  ```
+-* Modify `Makefile`, patching the same
+-  ```shell
+-  curl  -o "Makefile_bpftool.diff" $PATCH_URL/Makefile_bpftool.diff
+-  patch Makefile Makefile_bpftool.diff
+-  rm -rf Makefile_bpftool.diff
+-  ```
+-* Create Dockerfile.s390x file
+-  ```shell
+-  curl  -o "Dockerfile.s390x" $PATCH_URL/Dockerfile.s390x_bpftool
++### 4.3 Build calicoctl
++
++* Clone the `projectcalico/calicoctl` github repository.
++  
++  ```bash
++  git clone -b v3.14.1 https://github.com/projectcalico/calicoctl $GOPATH/src/github.com/projectcalico/calicoctl
++  cd $GOPATH/src/github.com/projectcalico/calicoctl
+   ```
+-* Build `bpftool`
+-  ```shell
++
++* Build the binaries and docker image for `calicoctl`
++  
++  ```bash
+   ARCH=s390x make image
+   ```
+ 
+-* Build `felix`
+-  ```shell
+-  git clone https://github.com/projectcalico/felix.git $GOPATH/src/github.com/projectcalico/felix
+-  cd $GOPATH/src/github.com/projectcalico/felix
+-  git checkout v3.12.0
+-  ```
++### 4.4 Build Typha
+ 
+-* Modify Makefile, patching the same
+-  ```shell
+-  curl  -o "Makefile_felix.diff" $PATCH_URL/Makefile_felix.diff
+-  patch Makefile Makefile_felix.diff
+-  rm -rf Makefile_felix.diff
+-  ```  
+-
+-* Create `bpf-clang-builder.Dockerfile.s390x` file
+-  ```shell
+-  curl  -o "bpf-clang-builder.Dockerfile.s390x" $PATCH_URL/bpf-clang-builder.Dockerfile.s390x
+-  cp bpf-clang-builder.Dockerfile.s390x docker-build-images/
+-  rm -rf bpf-clang-builder.Dockerfile.s390x
+-  ```  
+-
+-* Modify `docker-image/Dockerfile.s390x`, patching the same
+-  ```shell
+-  cd $GOPATH/src/github.com/projectcalico/felix/docker-image
+-  curl  -o "Dockerfile.s390x_felix.diff" $PATCH_URL/Dockerfile.s390x_felix.diff
+-  patch Dockerfile.s390x Dockerfile.s390x_felix.diff
+-  rm -rf Dockerfile.s390x_felix.diff
++* Clone the `projectcalico/typha` github repository.
++  
++  ```bash
++  git clone -b v3.14.1 https://github.com/projectcalico/typha $GOPATH/src/github.com/projectcalico/typha
++  cd $GOPATH/src/github.com/projectcalico/typha
+   ```
+ 
+-* Build the felix binaries
+-  ```shell
+-  cd $GOPATH/src/github.com/projectcalico/felix
+-  ARCH=s390x make image
++* Patch `Makefile`
++  
++  ```bash
++  curl -s $PATCH_URL/Makefile.diff.typha | git apply -
+   ```
+ 
+-#### 4.6 Build `cni-plugin` binaries and image
+-* Download the source code
+-  ```shell
+-  sudo mkdir -p /opt/cni/bin
+-  git clone https://github.com/projectcalico/cni-plugin.git $GOPATH/src/github.com/projectcalico/cni-plugin
+-  cd $GOPATH/src/github.com/projectcalico/cni-plugin
+-  git checkout v3.12.0
++* Build the binaries and docker image for `typha`
++  
++  ```bash
++  ARCH=s390x make GO_BUILD_VER=v0.39 image
+   ```
+ 
+-* Modify Makefile, patching the same
+-  ```shell
+-  curl  -o "Makefile_cni.diff" $PATCH_URL/Makefile_cni.diff
+-  patch Makefile Makefile_cni.diff
++#### 4.5 Build Felix
++
++* Clone the `projectcalico/felix` github repository.
++  
++  ```bash
++  git clone -b v3.14.1 https://github.com/projectcalico/felix.git $GOPATH/src/github.com/projectcalico/felix
++  cd $GOPATH/src/github.com/projectcalico/felix
+   ```
+ 
+-* Build binaries and image
+-  ```shell
+-  ARCH=s390x make image
+-  sudo cp bin/s390x/* /opt/cni/bin
+-  docker tag calico/cni:latest-s390x calico/cni:latest
+-  docker tag calico/cni:latest quay.io/calico/cni-s390x:v3.12.0
+-  docker tag calico/cni:latest-s390x calico/cni:v3.12.0
++* Download modified `docker-image/Dockerfile.s390x`, patch `Makefile` and patch `bpf-gpl/Makefile`
++  
++  ```bash
++  curl -o "docker-image/Dockerfile.s390x" $PATCH_URL/Dockerfile.s390x.felix
++  curl -s $PATCH_URL/Makefile.diff.felix | git apply -
++  curl -s $PATCH_URL/Makefile.diff.bpf-gpl | git apply -
+   ```
+ 
+-#### 4.7 Build image `calico/node`
+-* Download the source
+-  ```shell
+-  git clone https://github.com/projectcalico/node.git $GOPATH/src/github.com/projectcalico/node
+-  cd $GOPATH/src/github.com/projectcalico/node
+-  git checkout v3.12.0
++* Build the binaries and docker image for `felix`
++  
++  ```bash
++  ARCH=s390x make GO_BUILD_VER=v0.39 image
+   ```
+ 
+-* Modify `Makefile`, patching the same
+-  ```shell
+-  curl  -o "Makefile_node.diff" $PATCH_URL/Makefile_node.diff
+-  patch Makefile Makefile_node.diff
+-  rm -rf Makefile_node.diff
++### 4.6 Build cni-plugin
++
++* Clone the `projectcalico/cni-plugin` github repository.
++  
++  ```bash
++  git clone -b v3.14.1 https://github.com/projectcalico/cni-plugin.git $GOPATH/src/github.com/projectcalico/cni-plugin
++  cd $GOPATH/src/github.com/projectcalico/cni-plugin
+   ```
+ 
+-* Modify `Dockerfile.s390x`, patching the same
+-  ```shell
+-  curl  -o "Dockerfile.s390x_node.diff" $PATCH_URL/Dockerfile.s390x_node.diff
+-  patch Dockerfile.s390x Dockerfile.s390x_node.diff
+-  rm -rf Dockerfile.s390x_node.diff
++* Build the binaries and docker image for `cni`
++  
++  ```bash
++  ARCH=s390x make GO_BUILD_VER=v0.39 image
+   ```
+ 
++### 4.7 Build Node
++
++* Clone the `projectcalico/node` github repository.
+   
+-* Build `calico/node`<br/>
+-  Creating filesystem/bin and dist directories for keeping binaries
+-  ```shell
++  ```bash
++  git clone -b v3.14.1 https://github.com/projectcalico/node.git $GOPATH/src/github.com/projectcalico/node
+   cd $GOPATH/src/github.com/projectcalico/node
+-  mkdir -p filesystem/bin
+-  mkdir -p dist
+-  cp $GOPATH/src/github.com/projectcalico/felix/bin/calico-felix-s390x $GOPATH/src/github.com/projectcalico/node/filesystem/bin/calico-felix
+-  cp $GOPATH/src/github.com/projectcalico/calicoctl/bin/calicoctl-linux-s390x $GOPATH/src/github.com/projectcalico/node/dist/calicoctl
+   ```
+-  Building `calico/node` Image 
+-  ```shell
+-  cd $GOPATH/src/github.com/projectcalico/node
+-  ARCH=s390x make calico/node
++
++* Modify `go.mod` to point to local felix repository.
++  
++  ```bash
++  go mod edit -replace=github.com/projectcalico/felix=../felix
+   ```
++
++* Download modified `Dockerfile.s390x` and patch `Makefile`
+   
+-* Tag image `calico/node` to `quay.io/calico/node`
+-  ```shell
+-  docker tag calico/node:latest-s390x quay.io/calico/node-s390x:v3.12.0
+-  docker tag calico/node:latest-s390x calico/node
+-  docker tag calico/node:latest-s390x calico/node:v3.12.0
++  ```bash
++  curl -o "Dockerfile.s390x" $PATCH_URL/Dockerfile.s390x.node
++  curl -s $PATCH_URL/Makefile.diff.node | git apply -
+   ```
+ 
+-#### 4.8 Verify Calico Images
++* Build `node`
++  * Creating filesystem/bin and dist directories for keeping binaries
++
++     ```bash
++     cd $GOPATH/src/github.com/projectcalico/node
++     mkdir -p filesystem/bin
++     mkdir -p dist
++     cp ../felix/bin/calico-felix-s390x ./filesystem/bin/calico-felix
++     cp ../calicoctl/bin/calicoctl-linux-s390x ./dist/calicoctl
++     ```
++
++  * Build the binaries and docker image for `node`
++
++    ```bash
++    ARCH=s390x EXTRA_DOCKER_ARGS="-v `pwd`/../felix:/go/src/github.com/projectcalico/felix" make image
++    ```
++
++### 4.8 Apply docker tags
++
++Apply docker tags to label images with the version.
++
++```bash
++docker tag calico/node:latest-s390x calico/node:v3.14.1
++docker tag calico/felix:latest-s390x calico/felix:v3.14.1
++docker tag calico/typha:latest-s390x calico/typha:v3.14.1
++docker tag calico/ctl:latest-s390x calico/ctl:v3.14.1
++docker tag calico/cni:latest-s390x calico/cni:v3.14.1
++```
++
+ Verify that following docker images with respective tags are created:
+-  ```
+-  REPOSITORY                  TAG
+-  quay.io/coreos/etcd         latest
+-  quay.io/coreos/etcd         v3.3.7
+-  quay.io/coreos/etcd         v3.3.7-s390x
+-  calico/node                 latest
+-  calico/node                 latest-s390x
+-  calico/node                 v3.12.0
+-  quay.io/calico/node-s390x   v3.12.0
+-  calico/cni                  latest
+-  calico/cni                  latest-s390x
+-  calico/cni                  v3.12.0
+-  quay.io/calico/cni-s390x    v3.12.0
+-  calico/felix                latest-s390x
+-  calico/protoc-s390x         latest
+-  calico/protoc               latest-s390x
+-  calico/protoc               v0.1-s390x
+-  calico/typha                latest-s390x
+-  calico/typha                master-s390x
+-  calico/bird                 v0.3.3-151-g767b5389-s390x
+-  calico/bird                 latest
+-  calico/bird                 v0.3.3-s390x
+-  calico/ctl                  latest-s390x
+-  calico/go-build             latest
+-  calico/go-build             latest-s390x
+-  calico/go-build             v0.20
+-  calico/go-build             v0.31
+-  ```
++  
++```txt
++REPOSITORY                  TAG
++quay.io/coreos/etcd         v3.3.7-s390x
++calico/node                 latest-s390x
++calico/cni                  latest-s390x
++calico/felix                latest-s390x
++calico/typha                latest-s390x
++calico/ctl                  latest-s390x
++calico/node                 v3.14.1
++calico/cni                  v3.14.1
++calico/felix                v3.14.1
++calico/typha                v3.14.1
++calico/ctl                  v3.14.1
++calico/go-build             v0.39
++```
+ 
+-#### 4.9 Start `calico/node`
++### 4.9 Test node
+ 
+ * First start `etcd` in background that is required for running `calico/node`
+-  ```shell
++
++  ```bash
+   cd $GOPATH/src/github.com/coreos/etcd
+   ./bin/etcd --listen-client-urls=http://<host-ip>:2379 --advertise-client-urls=http://<host-ip>:2379 &
+   ```
+ 
+ * Start `calico/node`
+-  ```shell
+-  cd  $GOPATH/src/github.com/projectcalico/node
+-  sudo ETCD_ENDPOINTS=http://<host_run_etcd_ip>:2379 dist/calicoctl node run --node-image=quay.io/calico/node-s390x:v3.12.0
++
++  ```bash
++  cd $GOPATH/src/github.com/projectcalico/node
++  sudo ETCD_ENDPOINTS=http://<host_run_etcd_ip>:2379 dist/calicoctl node run --node-image=calico/node:latest-s390x
+   ```
+ 
+-Check the output and confirm  that `calico/node` is  successfully started.
++Check the output and confirm that `calico/node` is  successfully started.
++
++## 5. Calico testcases (Optional)
++
++### 5.1 Build calico/dind
+ 
+-### 5. Calico testcases (Optional)
++* Clone the `projectcalico/dind` github repository
+ 
+-#### 5.1 Build `calico/dind`
+-  ```shell
++  ```bash
+   git clone https://github.com/projectcalico/dind $GOPATH/src/github.com/projectcalico/dind
+   cd $GOPATH/src/github.com/projectcalico/dind
+   ```
++
+ * Build the dind
+-  ```shell
++
++  ```bash
+   docker build -t calico/dind -f Dockerfile-s390x .
+   ```
+   
+-#### 5.2 Modify Dockerfile for `calico/test`
+-  ```shell
+-  cd $GOPATH/src/github.com/projectcalico/node/calico_test/
+-  mkdir pkg
+-  cp $GOPATH/src/github.com/coreos/etcd/bin/etcd-v3.3.7-linux-s390x.tar.gz pkg
++### 5.2 Modify Dockerfile for calico/test
++
++* Copy over `etcd-v3.3.7-linux-s390x.tar.gz`
++
++  ```bash
++  cd $GOPATH/src/github.com/projectcalico/node
++  mkdir -p calico_test/pkg
++  cp $GOPATH/src/github.com/coreos/etcd/etcd-v3.3.7-linux-s390x.tar.gz calico_test/pkg
+   ```
++
+ * Modify `Dockerfile.s390x.calico_test`
+-  ```shell
+-  curl  -o "calico_test.diff" $PATCH_URL/calico_test.diff
+-  patch Dockerfile.s390x.calico_test calico_test.diff
+-  rm -rf calico_test.diff
+-  ```   
+-* Modify `Dockerfile.s390x` for workload
+-  ```shell
+-  cd $GOPATH/src/github.com/projectcalico/node/workload
+-  curl  -o "calico_workload.diff" $PATCH_URL/calico_workload.diff
+-  patch Dockerfile.s390x calico_workload.diff
+-  rm -rf calico_workload.diff
++
++  ```bash
++  cd $GOPATH/src/github.com/projectcalico/node
++  curl -s $PATCH_URL/Dockerfile.s390x.calico_test.diff | git apply -
+   ```
+ 
+-#### 5.4 Execute Calico Tests
++* Modify `Dockerfile.s390x` for workload
+ 
+-  _**Note:**_ While running below command for running tests, make sure `etcd` and `calico-node` are not running already. Kill `etcd` process and Stop `calico-node` container using following commands:
++  ```bash
++  cd $GOPATH/src/github.com/projectcalico/node
++  curl -s $PATCH_URL/Dockerfile.s390x.workload.diff | git apply -
+   ```
++
++### 5.3 Execute Calico Tests
++
++_**Note:**_ While running below command for running tests, make sure `etcd` and `calico-node` are not running already. Kill `etcd` process and Stop `calico-node` container using following commands:
++
++  ```bash
+   sudo pkill etcd
+   docker rm -f calico-node
+   ```
++
+   Execute test cases
+-  ```
++
++  ```bash
+   cd $GOPATH/src/github.com/projectcalico/node
+-  ARCH=s390x make st
++  ARCH=s390x CALICOCTL_VER=latest-s390x CNI_VER=latest-s390x EXTRA_DOCKER_ARGS="-v `pwd`/../felix:/go/src/github.com/projectcalico/felix" make st
+   ```
+   
+-#### 5.5 Verify test results
++### 5.4 Verify test results
++
+ Expected output for successful test case results:
+-  ```
+-  XML: /code/report/nosetests.xml
+-  [success] 4.95% tests.st.ipam.test_ipam.MultiHostIpam.test_pool_wrap_1: 137.6140s
+-  [success] 4.85% tests.st.ipam.test_ipam.MultiHostIpam.test_pool_wrap_0: 134.9024s
+-  [success] 3.55% tests.st.policy.test_profile.MultiHostMainline.test_rules_source_ip_sets: 98.5571s
+-
+-  .
+-  .
+-  .
+-  [success] 0.02% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_0: 0.6688s
+-  [success] 0.02% tests.st.bgp.test_global_config.TestBGP.test_defaults: 0.5905s
+-  [success] 0.01% tests.st.calicoctl.test_node_run.TestNodeRun.test_node_run_dryrun: 0.2424s
+-  [success] 0.01% tests.st.calicoctl.test_node_status.TestNodeStatus.test_node_status_fails: 0.2364s
+-  ----------------------------------------------------------------------
+-  Ran 104 tests in 2908.902s
+-
+-  OK (SKIP=9)
+-  make stop-etcd
+-  "Build dependency versions"
+-  BIRD_VERSION          = v0.3.3-151-g767b5389
+-  "Test dependency versions"
+-  CNI_VER               = latest
+-  "Calico git version"
+-  GIT_VERSION           = v3.12.0-dirty
+-  make[1]: Entering directory `$HOME/go/src/github.com/projectcalico/node'
+-  calico-etcd
+-  make[1]: Leaving directory `$HOME/go/src/github.com/projectcalico/node'
+-  ```
+-  _**Note:**_ If `test_felix_gateway` tests fail for Rhel(7.5, 7.6, 7.7, 7.8), this might be due to `firewalld` service being active. Stop the same, restart docker and then rerun the tests.
+-  
+-  Also, to run a subset of failed tests, you can refer to [here](https://github.com/projectcalico/node#how-can-i-run-a-subset-of-the-tests) for more information
+ 
+-### 6. Calico Integration
++```log
++XML: /code/report/nosetests.xml
++[success] 4.95% tests.st.ipam.test_ipam.MultiHostIpam.test_pool_wrap_1: 137.6140s
++[success] 4.85% tests.st.ipam.test_ipam.MultiHostIpam.test_pool_wrap_0: 134.9024s
++[success] 3.55% tests.st.policy.test_profile.MultiHostMainline.test_rules_source_ip_sets: 98.5571s
++.
++.
++.
++[success] 0.02% tests.st.calicoctl.test_default_pools.TestDefaultPools.test_default_pools_0: 0.6688s
++[success] 0.02% tests.st.bgp.test_global_config.TestBGP.test_defaults: 0.5905s
++[success] 0.01% tests.st.calicoctl.test_node_run.TestNodeRun.test_node_run_dryrun: 0.2424s
++[success] 0.01% tests.st.calicoctl.test_node_status.TestNodeStatus.test_node_status_fails: 0.2364s
++----------------------------------------------------------------------
++Ran 104 tests in 2908.902s
++
++OK (SKIP=9)
++make stop-etcd
++"Build dependency versions"
++BIRD_VERSION          = v0.3.3-151-g767b5389
++"Test dependency versions"
++CNI_VER               = latest
++"Calico git version"
++GIT_VERSION           = v3.14.1-dirty
++make[1]: Entering directory `$HOME/go/src/github.com/projectcalico/node'
++calico-etcd
++make[1]: Leaving directory `$HOME/go/src/github.com/projectcalico/node'
++```
++
++_**Note:**_
++
++* Certain tests fail for RHEL (7.6, 7.7, 7.8), this might be due to `firewalld` service being active. Stop the firewall, restart docker and then rerun the tests.
++* Node there is a single failure `tests.st.bgp.test_ipip.TestIPIP.test_issue_1584_0_bird` for both s390x and intel with Ubuntu 20.04.
++* There are intermittent test failures. To resolve them run them individually.
++  * To run a subset of failed tests, you can refer to [here](https://github.com/projectcalico/node#how-can-i-run-a-subset-of-the-tests) for more information
++
++## 6. Calico Integration
++
++### 6.1 [Calico with Kubernetes](https://github.com/linux-on-ibm-z/docs/wiki/Building-Calico-with-Kubernetes)
+ 
+-#### 6.1 [Calico with Kubernetes](https://github.com/linux-on-ibm-z/docs/wiki/Building-Calico-with-Kubernetes)
++### References
+ 
+-### References:
+-https://github.com/projectcalico
++<https://github.com/projectcalico>  
