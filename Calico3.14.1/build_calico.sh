@@ -4,7 +4,7 @@
 
 ################################################################################################################################################################
 #Script     :   build_calico.sh
-#Description:   The script builds Calico version v3.14.1 on Linux on IBM Z for RHEL (7.6, 7.7, 7.8), Ubuntu (16.04, 18.04, 20.04) and SLES (12 SP4, 12 SP5, 15 SP1).
+#Description:   The script builds Calico version v3.14.1 on Linux on IBM Z for RHEL (7.6, 7.7, 7.8, 8.1, 8.2), Ubuntu (16.04, 18.04, 20.04) and SLES (12 SP4, 12 SP5, 15 SP1).
 #Maintainer :   LoZ Open Source Ecosystem (https://www.ibm.com/developerworks/community/groups/community/lozopensource) 
 #Info/Notes :   Please refer to the instructions first for Building Calico mentioned in wiki( https://github.com/linux-on-ibm-z/docs/wiki/Building-Calico-3.x ).
 #               This script doesn't handle Docker installation. Install docker first before proceeding.
@@ -75,6 +75,7 @@ export LOGDIR=${WORKDIR}/logs
 #Create configuration log file
 export CONF_LOG="${LOGDIR}/configuration-$(date +"%F-%T").log"
 touch $CONF_LOG
+
 PATCH_URL="https://raw.githubusercontent.com/nirmannarang/test/master/Calico3.14.1"
 #PATCH_URL="https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/calico/${CALICO_VERSION}/patch"
 GO_INSTALL_URL="https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Go/${GOLANG_VERSION}/build_go.sh"
@@ -108,7 +109,7 @@ case "$DISTRO" in
 	sudo apt-get install -y patch git curl tar gcc wget make 2>&1 | tee -a "$CONF_LOG"
 	;;
 
-"rhel-7.6" | "rhel-7.7" | "rhel-7.8")
+"rhel-7.6" | "rhel-7.7" | "rhel-7.8" | "rhel-8.1" | "rhel-8.2")
 	printf -- "Installing %s %s for %s \n" "$PACKAGE_NAME" "$CALICO_VERSION" "$DISTRO" | tee -a "$CONF_LOG"
 	printf -- "Installing dependencies ... it may take some time.\n"
 	sudo yum install -y curl git wget tar gcc glibc-static.s390x make which patch 2>&1 | tee -a "$CONF_LOG"
