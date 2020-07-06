@@ -21,6 +21,7 @@ PHP_URL+="/php-${PACKAGE_VERSION}.tar.gz"
 
 PATCH_URL="https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/"
 PATCH_URL+="${PACKAGE_NAME}/${PACKAGE_VERSION}/patch"
+PATCH_URL="https://raw.githubusercontent.com/nirmannarang/test/master/PHP_7.4.6/PHP/7.4.6/patch"
 
 
 PREFIX=/usr/local
