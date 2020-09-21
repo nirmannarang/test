@@ -10,7 +10,7 @@ FORCE="false"
 LOG_FILE="$SOURCE_ROOT/logs/${PACKAGE_NAME}-${PACKAGE_VERSION}-$(date +"%F-%T").log"
 BUILD_ENV="$HOME/setenv.sh"
 
-trap cleanup 0 1 2
+trap cleanup 0 1 2 ERR
 
 #Check if directory exists
 if [ ! -d "$SOURCE_ROOT/logs/" ]; then
@@ -105,10 +105,9 @@ function configureAndInstall() {
 			sudo make install -e LD_LIBRARY_PATH=/usr/local/lib64/
 		fi	
    	else	
-		#cmake .. -DDOWNLOAD_BOOST=1 -DWITH_BOOST=. -DWITH_SSL=system
-		#make
-		#sudo make install
-		echo "inisde els"
+		cmake .. -DDOWNLOAD_BOOST=1 -DWITH_BOOST=. -DWITH_SSL=system
+		make
+		sudo make install
     fi
     
 	printf -- "MySQL build completed successfully. \n"
@@ -240,7 +239,7 @@ case "$DISTRO" in
 
 		configureAndInstall |& tee -a "$LOG_FILE"
     	;;
-"sles-15.1")
+"sles-15.1" | "sles-15.2")
     	printf -- "Installing %s %s for %s \n" "$PACKAGE_NAME" "$PACKAGE_VERSION" "$DISTRO" |& tee -a "$LOG_FILE"
     	printf -- "Installing dependencies... it may take some time.\n"
     	sudo zypper install -y cmake bison gcc gcc-c++ git hostname ncurses-devel openssl openssl-devel pkg-config gawk doxygen|& tee -a "$LOG_FILE"
