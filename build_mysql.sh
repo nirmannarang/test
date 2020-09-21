@@ -50,7 +50,8 @@ function prepare() {
 function cleanup() {
     # Remove artifacts
 	cd $SOURCE_ROOT
-	rm -rvf mysql-server || true
+	#rm -rvf mysql-server || true
+	rm -rvf mysql-server
     	printf -- "Cleaned up the artifacts\n" >>"$LOG_FILE"
 }
 
